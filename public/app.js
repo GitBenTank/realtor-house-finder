@@ -83,6 +83,9 @@ class RealtorHouseFinder {
 
         try {
             console.log('Making API request...');
+            console.log('Request URL:', window.location.origin + '/api/search');
+            console.log('Request body:', JSON.stringify(searchParams));
+            
             const response = await fetch('/api/search', {
                 method: 'POST',
                 headers: {
@@ -92,6 +95,12 @@ class RealtorHouseFinder {
             });
 
             console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             console.log('Response data:', data);
 
