@@ -25,7 +25,29 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Realtor House Finder API is running' });
 });
 
-// Search properties
+// Search properties (GET and POST)
+app.get('/api/search', async (req, res) => {
+    try {
+        const { location, propertyType, minPrice, maxPrice, bedrooms, bathrooms, limit = 50 } = req.query;
+        
+        const searchParams = {
+            location,
+            propertyType: propertyType || 'house',
+            minPrice: minPrice || 0,
+            maxPrice: maxPrice || 10000000,
+            bedrooms: bedrooms || 0,
+            bathrooms: bathrooms || 0,
+            limit: Math.min(limit, 100)
+        };
+
+        const properties = await realEstateAPI.searchProperties(searchParams);
+        res.json({ success: true, data: properties, count: properties.length });
+    } catch (error) {
+        console.error('Search error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.post('/api/search', async (req, res) => {
     try {
         const { location, propertyType, minPrice, maxPrice, bedrooms, bathrooms, limit = 50 } = req.body;
