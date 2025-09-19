@@ -7,7 +7,8 @@ class RealEstateAPI {
         this.baseURL = 'https://realtor16.p.rapidapi.com';
         
         if (!this.apiKey) {
-            throw new Error('RAPIDAPI_KEY is required. Please set it in your .env file');
+            console.warn('RAPIDAPI_KEY not found, will use mock data');
+            this.apiKey = 'mock';
         }
     }
 
@@ -23,6 +24,12 @@ class RealEstateAPI {
                 limit = 50,
                 offset = 0
             } = params;
+
+            // If API key is mock or quota is likely exceeded, use mock data
+            if (this.apiKey === 'mock') {
+                console.log('Using mock data (no API key)');
+                return this.getMockProperties(location, limit);
+            }
 
             // Use the search/forsale endpoint for realtor16 API
             const queryParams = new URLSearchParams({
@@ -48,7 +55,16 @@ class RealEstateAPI {
             return this.formatProperties(response.data.properties || []);
         } catch (error) {
             console.error('Real Estate API Error:', error.response?.data || error.message);
-            console.log('API failed, using mock data for demonstration');
+            
+            // Check if it's a quota exceeded error
+            if (error.message.includes('quota') || error.message.includes('exceeded') || 
+                (error.response?.data && error.response.data.message && 
+                 error.response.data.message.includes('quota'))) {
+                console.log('API quota exceeded, using mock data for demonstration');
+            } else {
+                console.log('API failed, using mock data for demonstration');
+            }
+            
             return this.getMockProperties(location, limit);
         }
     }

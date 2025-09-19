@@ -44,7 +44,15 @@ app.get('/api/search', async (req, res) => {
         res.json({ success: true, data: properties, count: properties.length });
     } catch (error) {
         console.error('Search error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        
+        // If API fails, try to return mock data
+        if (error.message.includes('quota') || error.message.includes('exceeded')) {
+            console.log('API quota exceeded, returning mock data');
+            const mockProperties = realEstateAPI.getMockProperties(req.query.location, req.query.limit);
+            res.json({ success: true, data: mockProperties, count: mockProperties.length });
+        } else {
+            res.status(500).json({ success: false, error: error.message });
+        }
     }
 });
 
@@ -66,7 +74,15 @@ app.post('/api/search', async (req, res) => {
         res.json({ success: true, data: properties, count: properties.length });
     } catch (error) {
         console.error('Search error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        
+        // If API fails, try to return mock data
+        if (error.message.includes('quota') || error.message.includes('exceeded')) {
+            console.log('API quota exceeded, returning mock data');
+            const mockProperties = realEstateAPI.getMockProperties(req.body.location, req.body.limit);
+            res.json({ success: true, data: mockProperties, count: mockProperties.length });
+        } else {
+            res.status(500).json({ success: false, error: error.message });
+        }
     }
 });
 
