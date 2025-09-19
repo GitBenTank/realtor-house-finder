@@ -3,8 +3,8 @@ const axios = require('axios');
 class RealEstateAPI {
     constructor() {
         this.apiKey = process.env.RAPIDAPI_KEY;
-        this.host = process.env.RAPIDAPI_HOST || 'realtor16.p.rapidapi.com';
-        this.baseURL = 'https://realtor16.p.rapidapi.com';
+        this.host = process.env.RAPIDAPI_HOST || 'realtor-data1.p.rapidapi.com';
+        this.baseURL = 'https://realtor-data1.p.rapidapi.com';
         
         if (!this.apiKey) {
             console.warn('RAPIDAPI_KEY not found, will use mock data');
@@ -31,24 +31,31 @@ class RealEstateAPI {
                 return this.getMockProperties(params.location, params.limit);
             }
 
-            // Use the search/forsale endpoint for realtor16 API
-            const queryParams = new URLSearchParams({
-                location: location,
-                limit: Math.min(limit, 200).toString(),
-                offset: offset.toString(),
-                sort: 'relevance'
-            });
+            // Use the property_list endpoint for realtor-data1 API
+            const payload = {
+                query: {
+                    status: ["for_sale"],
+                    postal_code: this.extractPostalCode(location) || "10001" // Default to NYC if no postal code
+                },
+                limit: Math.min(limit, 100),
+                offset: offset,
+                sort: {
+                    direction: "desc",
+                    field: "list_date"
+                }
+            };
 
             // Add optional parameters if provided
-            if (minPrice > 0) queryParams.append('price_min', minPrice.toString());
-            if (maxPrice < 10000000) queryParams.append('price_max', maxPrice.toString());
-            if (bedrooms > 0) queryParams.append('beds_min', bedrooms.toString());
-            if (bathrooms > 0) queryParams.append('baths_min', bathrooms.toString());
+            if (minPrice > 0) payload.query.price_min = minPrice;
+            if (maxPrice < 10000000) payload.query.price_max = maxPrice;
+            if (bedrooms > 0) payload.query.beds_min = bedrooms;
+            if (bathrooms > 0) payload.query.baths_min = bathrooms;
 
-            const response = await axios.get(`${this.baseURL}/search/forsale?${queryParams}`, {
+            const response = await axios.post(`${this.baseURL}/property_list/`, payload, {
                 headers: {
                     'X-RapidAPI-Key': this.apiKey,
-                    'X-RapidAPI-Host': this.host
+                    'X-RapidAPI-Host': this.host,
+                    'Content-Type': 'application/json'
                 }
             });
 
@@ -71,31 +78,31 @@ class RealEstateAPI {
 
     formatProperties(properties) {
         return properties.map(property => ({
-            id: property.property_id || property.listing_id,
+            id: property.property_id || property.listing_id || property.id,
             address: this.formatAddress(property),
-            price: this.formatPrice(property.list_price),
-            bedrooms: property.description?.beds || 0,
-            bathrooms: this.parseBathrooms(property.description?.baths_consolidated),
-            squareFeet: property.description?.sqft || 0,
-            lotSize: property.description?.lot_sqft || 0,
-            propertyType: property.description?.type || 'Unknown',
+            price: this.formatPrice(property.list_price || property.price),
+            bedrooms: property.beds || property.bedrooms || 0,
+            bathrooms: this.parseBathrooms(property.baths || property.bathrooms),
+            squareFeet: property.sqft || property.square_feet || 0,
+            lotSize: property.lot_sqft || property.lot_size || 0,
+            propertyType: property.property_type || property.type || 'Unknown',
             status: property.status || 'For Sale',
-            listDate: property.list_date || new Date().toISOString(),
-            description: property.description?.name || '',
-            yearBuilt: property.description?.year_built || 'Unknown',
-            garage: 0, // Not available in this API
-            pool: false, // Not available in this API
-            images: property.photos || [],
+            listDate: property.list_date || property.date_listed || new Date().toISOString(),
+            description: property.description || property.name || '',
+            yearBuilt: property.year_built || 'Unknown',
+            garage: property.garage || 0,
+            pool: property.pool || false,
+            images: property.photos || property.images || [],
             agent: {
-                name: property.branding?.[0]?.name || 'Unknown',
-                phone: '',
-                email: ''
+                name: property.agent?.name || property.branding?.[0]?.name || 'Unknown',
+                phone: property.agent?.phone || '',
+                email: property.agent?.email || ''
             },
             coordinates: {
-                lat: property.location?.address?.coordinate?.lat || 0,
-                lng: property.location?.address?.coordinate?.lon || 0
+                lat: property.lat || property.latitude || property.location?.lat || 0,
+                lng: property.lng || property.longitude || property.location?.lng || 0
             },
-            url: `https://www.realtor.com/realestateandhomes-detail/${property.permalink}`,
+            url: property.url || `https://www.realtor.com/realestateandhomes-detail/${property.permalink || property.id}`,
             lastUpdated: new Date().toISOString()
         }));
     }
@@ -274,6 +281,12 @@ class RealEstateAPI {
         ];
 
         return this.formatProperties(mockProperties.slice(0, limit));
+    }
+
+    extractPostalCode(location) {
+        // Try to extract postal code from location string
+        const postalMatch = location.match(/\b\d{5}(-\d{4})?\b/);
+        return postalMatch ? postalMatch[0] : null;
     }
 }
 
