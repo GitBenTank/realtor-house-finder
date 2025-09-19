@@ -28,7 +28,7 @@ class RealEstateAPI {
             // If API key is mock or quota is likely exceeded, use mock data
             if (this.apiKey === 'mock') {
                 console.log('Using mock data (no API key)');
-                return this.getMockProperties(location, limit);
+                return this.getMockProperties(params.location, params.limit);
             }
 
             // Use the search/forsale endpoint for realtor16 API
@@ -65,7 +65,7 @@ class RealEstateAPI {
                 console.log('API failed, using mock data for demonstration');
             }
             
-            return this.getMockProperties(location, limit);
+            return this.getMockProperties(params.location, params.limit);
         }
     }
 
@@ -181,6 +181,11 @@ class RealEstateAPI {
     }
 
     getMockProperties(location, limit = 5) {
+        // Ensure location is a string and has a default value
+        const locationStr = location || 'Nashville, TN';
+        const city = locationStr.split(',')[0]?.trim() || 'Nashville';
+        const state = locationStr.split(',')[1]?.trim() || 'TN';
+        
         const mockProperties = [
             {
                 property_id: 'mock-1',
@@ -188,8 +193,8 @@ class RealEstateAPI {
                 location: {
                     address: {
                         line: `123 Main St`,
-                        city: location.split(',')[0]?.trim() || 'Nashville',
-                        state_code: location.split(',')[1]?.trim() || 'TN',
+                        city: city,
+                        state_code: state,
                         postal_code: '37201',
                         coordinate: { lat: 36.1627, lon: -86.7816 }
                     }
@@ -216,8 +221,8 @@ class RealEstateAPI {
                 location: {
                     address: {
                         line: `456 Oak Ave`,
-                        city: location.split(',')[0]?.trim() || 'Nashville',
-                        state_code: location.split(',')[1]?.trim() || 'TN',
+                        city: city,
+                        state_code: state,
                         postal_code: '37202',
                         coordinate: { lat: 36.1527, lon: -86.7916 }
                     }
@@ -244,8 +249,8 @@ class RealEstateAPI {
                 location: {
                     address: {
                         line: `789 Pine St`,
-                        city: location.split(',')[0]?.trim() || 'Nashville',
-                        state_code: location.split(',')[1]?.trim() || 'TN',
+                        city: city,
+                        state_code: state,
                         postal_code: '37203',
                         coordinate: { lat: 36.1727, lon: -86.7716 }
                     }
