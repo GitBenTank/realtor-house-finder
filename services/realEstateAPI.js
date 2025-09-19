@@ -59,7 +59,7 @@ class RealEstateAPI {
                 }
             });
 
-            return this.formatProperties(response.data.properties || []);
+            return this.formatProperties(response.data.data?.home_search?.properties || []);
         } catch (error) {
             console.error('Real Estate API Error:', error.response?.data || error.message);
             
@@ -81,28 +81,28 @@ class RealEstateAPI {
             id: property.property_id || property.listing_id || property.id,
             address: this.formatAddress(property),
             price: this.formatPrice(property.list_price || property.price),
-            bedrooms: property.beds || property.bedrooms || 0,
-            bathrooms: this.parseBathrooms(property.baths || property.bathrooms),
-            squareFeet: property.sqft || property.square_feet || 0,
-            lotSize: property.lot_sqft || property.lot_size || 0,
-            propertyType: property.property_type || property.type || 'Unknown',
+            bedrooms: property.description?.beds || property.beds || 0,
+            bathrooms: this.parseBathrooms(property.description?.baths_consolidated || property.baths),
+            squareFeet: property.description?.sqft || property.sqft || 0,
+            lotSize: property.description?.lot_sqft || property.lot_sqft || 0,
+            propertyType: property.description?.type || property.property_type || 'Unknown',
             status: property.status || 'For Sale',
-            listDate: property.list_date || property.date_listed || new Date().toISOString(),
-            description: property.description || property.name || '',
+            listDate: property.list_date || new Date().toISOString(),
+            description: property.description?.name || property.name || '',
             yearBuilt: property.year_built || 'Unknown',
             garage: property.garage || 0,
             pool: property.pool || false,
-            images: property.photos || property.images || [],
+            images: property.photos?.map(photo => photo.href) || property.images || [],
             agent: {
-                name: property.agent?.name || property.branding?.[0]?.name || 'Unknown',
+                name: property.branding?.[0]?.name || property.advertisers?.[0]?.name || 'Unknown',
                 phone: property.agent?.phone || '',
                 email: property.agent?.email || ''
             },
             coordinates: {
-                lat: property.lat || property.latitude || property.location?.lat || 0,
-                lng: property.lng || property.longitude || property.location?.lng || 0
+                lat: property.location?.address?.coordinate?.lat || property.lat || 0,
+                lng: property.location?.address?.coordinate?.lon || property.lng || 0
             },
-            url: property.url || `https://www.realtor.com/realestateandhomes-detail/${property.permalink || property.id}`,
+            url: `https://www.realtor.com/realestateandhomes-detail/${property.permalink || property.id}`,
             lastUpdated: new Date().toISOString()
         }));
     }
