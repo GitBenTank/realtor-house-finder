@@ -10,15 +10,41 @@ class RealtorHouseFinder {
     }
 
     bindEvents() {
+        console.log('Binding events...');
+        
         const searchForm = document.getElementById('searchForm');
         const exportBtn = document.getElementById('exportBtn');
         const clearBtn = document.getElementById('clearBtn');
         const testBtn = document.getElementById('testBtn');
+        const searchBtn = document.getElementById('searchBtn');
 
-        searchForm.addEventListener('submit', (e) => this.handleSearch(e));
-        exportBtn.addEventListener('click', () => this.handleExport());
-        clearBtn.addEventListener('click', () => this.handleClear());
-        testBtn.addEventListener('click', () => this.handleTestSearch());
+        console.log('Elements found:', {
+            searchForm: !!searchForm,
+            exportBtn: !!exportBtn,
+            clearBtn: !!clearBtn,
+            testBtn: !!testBtn,
+            searchBtn: !!searchBtn
+        });
+
+        // Add both form submit and button click handlers
+        if (searchForm) {
+            searchForm.addEventListener('submit', (e) => {
+                console.log('Form submit event triggered');
+                this.handleSearch(e);
+            });
+        }
+        
+        if (searchBtn) {
+            searchBtn.addEventListener('click', (e) => {
+                console.log('Search button clicked');
+                e.preventDefault();
+                this.handleSearch(e);
+            });
+        }
+        
+        if (exportBtn) exportBtn.addEventListener('click', () => this.handleExport());
+        if (clearBtn) clearBtn.addEventListener('click', () => this.handleClear());
+        if (testBtn) testBtn.addEventListener('click', () => this.handleTestSearch());
     }
 
     async checkAPIHealth() {
@@ -35,18 +61,20 @@ class RealtorHouseFinder {
 
     async handleSearch(e) {
         e.preventDefault();
-        console.log('Search form submitted');
+        console.log('Search form submitted - event:', e.type);
         
         // Get form values directly from the form elements
         const locationInput = document.getElementById('location').value.trim();
+        console.log('Location input:', locationInput);
+        
         const searchParams = {
             location: this.formatLocation(locationInput),
-            propertyType: document.getElementById('propertyType').value,
-            minPrice: parseInt(document.getElementById('minPrice').value) || 0,
-            maxPrice: parseInt(document.getElementById('maxPrice').value) || 1000000,
-            bedrooms: parseInt(document.getElementById('bedrooms').value) || 0,
-            bathrooms: parseInt(document.getElementById('bathrooms').value) || 0,
-            limit: parseInt(document.getElementById('limit').value) || 50
+            propertyType: document.getElementById('propertyType')?.value || 'house',
+            minPrice: parseInt(document.getElementById('minPrice')?.value) || 0,
+            maxPrice: parseInt(document.getElementById('maxPrice')?.value) || 1000000,
+            bedrooms: parseInt(document.getElementById('bedrooms')?.value) || 0,
+            bathrooms: 0, // Not available in current form
+            limit: parseInt(document.getElementById('limit')?.value) || 50
         };
 
         console.log('Search params:', searchParams);
@@ -111,16 +139,16 @@ class RealtorHouseFinder {
 
     createPropertyCard(property) {
         const card = document.createElement('div');
-        card.className = 'border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300';
+        card.className = 'border border-gray-200 rounded-lg p-3 md:p-4 hover:shadow-md transition duration-300';
         
         const price = this.formatCurrency(property.price);
         const pricePerSqft = property.squareFeet > 0 ? Math.round(property.price / property.squareFeet) : 0;
         const daysOnMarket = Math.floor((new Date() - new Date(property.listDate)) / (1000 * 60 * 60 * 24));
 
         card.innerHTML = `
-            <div class="flex justify-between items-start mb-2">
-                <h4 class="text-lg font-semibold text-gray-800">${property.address}</h4>
-                <span class="text-2xl font-bold text-green-600">${price}</span>
+            <div class="flex flex-col sm:flex-row justify-between items-start mb-2 space-y-1 sm:space-y-0">
+                <h4 class="text-base md:text-lg font-semibold text-gray-800 flex-1">${property.address}</h4>
+                <span class="text-xl md:text-2xl font-bold text-green-600">${price}</span>
             </div>
             
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 text-sm text-gray-600">
@@ -224,14 +252,19 @@ class RealtorHouseFinder {
 
     async handleTestSearch() {
         console.log('Test search button clicked');
+        
+        // Get the current location from the form
+        const locationInput = document.getElementById('location').value.trim();
+        const testLocation = locationInput ? this.formatLocation(locationInput) : 'Nashville, TN';
+        
         const searchParams = {
-            location: 'New York, NY',
-            propertyType: 'house',
-            minPrice: 0,
-            maxPrice: 1000000,
-            bedrooms: 0,
-            bathrooms: 0,
-            limit: 5
+            location: testLocation,
+            propertyType: document.getElementById('propertyType')?.value || 'house',
+            minPrice: parseInt(document.getElementById('minPrice')?.value) || 0,
+            maxPrice: parseInt(document.getElementById('maxPrice')?.value) || 1000000,
+            bedrooms: parseInt(document.getElementById('bedrooms')?.value) || 0,
+            bathrooms: 0, // Not available in current form
+            limit: parseInt(document.getElementById('limit')?.value) || 5
         };
 
         console.log('Test search params:', searchParams);
@@ -395,5 +428,31 @@ class RealtorHouseFinder {
 
 // Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new RealtorHouseFinder();
+    console.log('DOM loaded, initializing RealtorHouseFinder...');
+    try {
+        window.realtorApp = new RealtorHouseFinder();
+        console.log('RealtorHouseFinder initialized successfully');
+        
+        // Add a global test function
+        window.testAPI = async (location = 'Nashville, TN') => {
+            console.log('Testing API with location:', location);
+            try {
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ location, limit: 3 })
+                });
+                const data = await response.json();
+                console.log('API Response:', data);
+                return data;
+            } catch (error) {
+                console.error('API Test Error:', error);
+                return null;
+            }
+        };
+        
+        console.log('Test function available: window.testAPI("Miami, FL")');
+    } catch (error) {
+        console.error('Error initializing RealtorHouseFinder:', error);
+    }
 });
