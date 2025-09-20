@@ -61,7 +61,7 @@ class RealEstateAPI {
 
             // Add optional parameters if provided
             if (minPrice > 0) payload.query.price_min = minPrice;
-            if (maxPrice < 10000000) payload.query.price_max = maxPrice;
+            if (maxPrice > 0 && maxPrice < 10000000) payload.query.price_max = maxPrice;
             if (bedrooms > 0) payload.query.beds_min = bedrooms;
             if (bathrooms > 0) payload.query.baths_min = bathrooms;
 
