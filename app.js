@@ -153,57 +153,112 @@ class RealtorHouseFinder {
 
     createPropertyCard(property) {
         const card = document.createElement('div');
-        card.className = 'border border-gray-200 rounded-lg p-3 md:p-4 hover:shadow-md transition duration-300';
+        card.className = 'property-card rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 fade-in';
         
         const price = this.formatCurrency(property.price);
         const pricePerSqft = property.squareFeet > 0 ? Math.round(property.price / property.squareFeet) : 0;
         const daysOnMarket = Math.floor((new Date() - new Date(property.listDate)) / (1000 * 60 * 60 * 24));
+        const isNewListing = daysOnMarket <= 7;
+        const isPriceReduced = property.priceReducedAmount && property.priceReducedAmount > 0;
 
         card.innerHTML = `
-            <div class="flex flex-col sm:flex-row justify-between items-start mb-2 space-y-1 sm:space-y-0">
-                <h4 class="text-base md:text-lg font-semibold text-gray-800 flex-1">${property.address}</h4>
-                <span class="text-xl md:text-2xl font-bold text-green-600">${price}</span>
-            </div>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3 text-sm text-gray-600">
-                <div class="flex items-center">
-                    <i class="fas fa-bed mr-2 text-blue-600"></i>
-                    <span>${property.bedrooms} bed</span>
+            <!-- Property Image -->
+            <div class="relative mb-6 rounded-xl overflow-hidden">
+                ${property.images && property.images.length > 0 ? 
+                    `<img src="${property.images[0]}" alt="${property.address}" class="w-full h-48 object-cover transition-transform duration-300 hover:scale-105">` :
+                    `<div class="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                        <i class="fas fa-home text-4xl text-gray-400"></i>
+                    </div>`
+                }
+                <div class="absolute top-4 left-4 flex flex-col space-y-2">
+                    ${isNewListing ? '<span class="status-badge bg-gradient-to-r from-green-500 to-emerald-500">New Listing</span>' : ''}
+                    ${isPriceReduced ? '<span class="status-badge bg-gradient-to-r from-red-500 to-pink-500">Price Reduced</span>' : ''}
                 </div>
-                <div class="flex items-center">
-                    <i class="fas fa-bath mr-2 text-blue-600"></i>
-                    <span>${property.bathrooms} bath</span>
-                </div>
-                <div class="flex items-center">
-                    <i class="fas fa-ruler-combined mr-2 text-blue-600"></i>
-                    <span>${property.squareFeet.toLocaleString()} sq ft</span>
-                </div>
-                <div class="flex items-center">
-                    <i class="fas fa-calendar mr-2 text-blue-600"></i>
-                    <span>${daysOnMarket} days</span>
+                <div class="absolute top-4 right-4">
+                    <span class="status-badge bg-gradient-to-r from-blue-500 to-purple-500">${property.status.replace('_', ' ').toUpperCase()}</span>
                 </div>
             </div>
-            
-            <div class="flex flex-wrap gap-2 mb-3">
-                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">${property.propertyType}</span>
-                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">${property.status}</span>
-                ${property.pool ? '<span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Pool</span>' : ''}
-                ${property.garage > 0 ? `<span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">${property.garage} Garage</span>` : ''}
-            </div>
-            
-            <div class="text-sm text-gray-600 mb-2">
-                <span class="font-medium">Price per sq ft:</span> $${pricePerSqft.toLocaleString()}
-                ${property.yearBuilt !== 'Unknown' ? ` | <span class="font-medium">Built:</span> ${property.yearBuilt}` : ''}
-            </div>
-            
-            ${property.description ? `<p class="text-sm text-gray-600 mb-3 line-clamp-2">${property.description}</p>` : ''}
-            
-            <div class="flex justify-between items-center">
-                <div class="text-xs text-gray-500">
-                    <i class="fas fa-user mr-1"></i>
-                    ${property.agent.name}
+
+            <!-- Property Header -->
+            <div class="mb-4">
+                <h4 class="text-lg font-bold text-gray-800 mb-2 line-clamp-2 leading-tight">${property.address}</h4>
+                <div class="flex items-center justify-between">
+                    <span class="text-3xl font-bold price-highlight">${price}</span>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-500">${pricePerSqft.toLocaleString()}/sq ft</div>
+                        <div class="text-xs text-gray-400">${daysOnMarket} days on market</div>
+                    </div>
                 </div>
-                ${property.url ? `<a href="${property.url}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Details <i class="fas fa-external-link-alt ml-1"></i></a>` : ''}
+            </div>
+            
+            <!-- Property Details -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-xl">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-bed text-white text-sm"></i>
+                    </div>
+                    <div>
+                        <div class="text-lg font-bold text-gray-800">${property.bedrooms}</div>
+                        <div class="text-xs text-gray-500">Bedrooms</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-xl">
+                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-bath text-white text-sm"></i>
+                    </div>
+                    <div>
+                        <div class="text-lg font-bold text-gray-800">${property.bathrooms}</div>
+                        <div class="text-xs text-gray-500">Bathrooms</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3 p-3 bg-purple-50 rounded-xl">
+                    <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-ruler-combined text-white text-sm"></i>
+                    </div>
+                    <div>
+                        <div class="text-lg font-bold text-gray-800">${property.squareFeet.toLocaleString()}</div>
+                        <div class="text-xs text-gray-500">Sq Ft</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3 p-3 bg-orange-50 rounded-xl">
+                    <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-calendar text-white text-sm"></i>
+                    </div>
+                    <div>
+                        <div class="text-lg font-bold text-gray-800">${daysOnMarket}</div>
+                        <div class="text-xs text-gray-500">Days Listed</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Property Features -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                <span class="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs rounded-full font-medium">
+                    ${property.propertyType.replace('_', ' ').toUpperCase()}
+                </span>
+                ${property.pool ? '<span class="px-3 py-1 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs rounded-full font-medium">🏊 Pool</span>' : ''}
+                ${property.garage > 0 ? `<span class="px-3 py-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white text-xs rounded-full font-medium">🚗 ${property.garage} Garage</span>` : ''}
+                ${property.yearBuilt !== 'Unknown' ? `<span class="px-3 py-1 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white text-xs rounded-full font-medium">🏗️ Built ${property.yearBuilt}</span>` : ''}
+            </div>
+            
+            <!-- Agent Info -->
+            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-white text-xs"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-800">${property.agent.name}</div>
+                        <div class="text-xs text-gray-500">Real Estate Agent</div>
+                    </div>
+                </div>
+                ${property.url ? `
+                    <a href="${property.url}" target="_blank" 
+                       class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-blue-600 hover:to-purple-600 transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl">
+                        <span>View Details</span>
+                        <i class="fas fa-external-link-alt text-xs"></i>
+                    </a>
+                ` : ''}
             </div>
         `;
 
