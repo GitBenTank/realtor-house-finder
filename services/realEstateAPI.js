@@ -28,7 +28,7 @@ class RealEstateAPI {
             // If API key is mock or quota is likely exceeded, use mock data
             if (this.apiKey === 'mock') {
                 console.log('Using mock data (no API key)');
-                return this.getMockProperties(params.location, params.limit);
+                return this.getMockProperties(location, limit);
             }
 
             // Use the property_list endpoint for realtor-data1 API
@@ -72,7 +72,7 @@ class RealEstateAPI {
                 console.log('API failed, using mock data for demonstration');
             }
             
-            return this.getMockProperties(params.location, params.limit);
+            return this.getMockProperties(location, limit);
         }
     }
 
