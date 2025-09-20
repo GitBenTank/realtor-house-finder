@@ -36,7 +36,15 @@ app.get('/app.js', (req, res) => {
 
 // API Routes
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', message: 'Realtor House Finder API is running' });
+    res.json({ 
+        status: 'OK', 
+        message: 'Realtor House Finder API is running',
+        env: {
+            hasRapidAPIKey: !!process.env.RAPIDAPI_KEY,
+            hasRapidAPIHost: !!process.env.RAPIDAPI_HOST,
+            rapidAPIHost: process.env.RAPIDAPI_HOST
+        }
+    });
 });
 
 // Search properties (GET and POST)
