@@ -71,11 +71,16 @@ class RealtorHouseFinder {
             location: this.formatLocation(locationInput),
             propertyType: document.getElementById('propertyType')?.value || 'house',
             minPrice: parseInt(document.getElementById('minPrice')?.value) || 0,
-            maxPrice: parseInt(document.getElementById('maxPrice')?.value) || 1000000,
             bedrooms: parseInt(document.getElementById('bedrooms')?.value) || 0,
             bathrooms: 0, // Not available in current form
             limit: parseInt(document.getElementById('limit')?.value) || 50
         };
+        
+        // Only add maxPrice if it's not the default value
+        const maxPriceValue = parseInt(document.getElementById('maxPrice')?.value);
+        if (maxPriceValue && maxPriceValue !== 1000000) {
+            searchParams.maxPrice = maxPriceValue;
+        }
 
         console.log('Search params:', searchParams);
         this.showLoading(true);
@@ -270,11 +275,16 @@ class RealtorHouseFinder {
             location: testLocation,
             propertyType: document.getElementById('propertyType')?.value || 'house',
             minPrice: parseInt(document.getElementById('minPrice')?.value) || 0,
-            maxPrice: parseInt(document.getElementById('maxPrice')?.value) || 1000000,
             bedrooms: parseInt(document.getElementById('bedrooms')?.value) || 0,
             bathrooms: 0, // Not available in current form
             limit: parseInt(document.getElementById('limit')?.value) || 5
         };
+        
+        // Only add maxPrice if it's not the default value
+        const maxPriceValue = parseInt(document.getElementById('maxPrice')?.value);
+        if (maxPriceValue && maxPriceValue !== 1000000) {
+            searchParams.maxPrice = maxPriceValue;
+        }
 
         console.log('Test search params:', searchParams);
         this.showLoading(true);
