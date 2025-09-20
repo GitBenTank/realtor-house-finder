@@ -3,7 +3,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
-const realEstateAPI = require('./services/realEstateAPI');
+const RealEstateAPI = require('./services/realEstateAPI');
 const excelService = require('./services/excelService');
 const cronService = require('./services/cronService');
 
@@ -62,6 +62,7 @@ app.get('/api/search', async (req, res) => {
             limit: Math.min(limit, 100)
         };
 
+        const realEstateAPI = new RealEstateAPI();
         const properties = await realEstateAPI.searchProperties(searchParams);
         res.json({ success: true, data: properties, count: properties.length });
     } catch (error) {
@@ -70,6 +71,7 @@ app.get('/api/search', async (req, res) => {
         // If API fails, try to return mock data
         if (error.message.includes('quota') || error.message.includes('exceeded')) {
             console.log('API quota exceeded, returning mock data');
+            const realEstateAPI = new RealEstateAPI();
             const mockProperties = realEstateAPI.getMockProperties(req.query.location, req.query.limit);
             res.json({ success: true, data: mockProperties, count: mockProperties.length });
         } else {
@@ -92,6 +94,7 @@ app.post('/api/search', async (req, res) => {
             limit: Math.min(limit, 100)
         };
 
+        const realEstateAPI = new RealEstateAPI();
         const properties = await realEstateAPI.searchProperties(searchParams);
         res.json({ success: true, data: properties, count: properties.length });
     } catch (error) {
@@ -100,6 +103,7 @@ app.post('/api/search', async (req, res) => {
         // If API fails, try to return mock data
         if (error.message.includes('quota') || error.message.includes('exceeded')) {
             console.log('API quota exceeded, returning mock data');
+            const realEstateAPI = new RealEstateAPI();
             const mockProperties = realEstateAPI.getMockProperties(req.body.location, req.body.limit);
             res.json({ success: true, data: mockProperties, count: mockProperties.length });
         } else {
