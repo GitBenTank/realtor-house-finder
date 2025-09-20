@@ -57,6 +57,62 @@ app.get('/api/test', async (req, res) => {
     }
 });
 
+// Debug API endpoint
+app.get('/api/debug', async (req, res) => {
+    try {
+        const realEstateAPI = new RealEstateAPI();
+        console.log('Debug - API Service Debug Info:', {
+            apiKey: realEstateAPI.apiKey ? 'present' : 'missing',
+            host: realEstateAPI.host,
+            baseURL: realEstateAPI.baseURL
+        });
+        
+        // Try to make the actual API call
+        const payload = {
+            query: {
+                status: ["for_sale"],
+                postal_code: "10022"
+            },
+            limit: 1,
+            offset: 0,
+            sort: {
+                direction: "desc",
+                field: "list_date"
+            }
+        };
+        
+        const response = await require('axios').post(`${realEstateAPI.baseURL}/property_list/`, payload, {
+            headers: {
+                'X-RapidAPI-Key': realEstateAPI.apiKey,
+                'X-RapidAPI-Host': realEstateAPI.host,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        res.json({ 
+            success: true, 
+            debug: {
+                apiKey: realEstateAPI.apiKey ? 'present' : 'missing',
+                host: realEstateAPI.host,
+                baseURL: realEstateAPI.baseURL,
+                responseData: response.data
+            }
+        });
+    } catch (error) {
+        res.json({ 
+            success: false, 
+            error: error.message,
+            debug: {
+                apiKey: process.env.RAPIDAPI_KEY ? 'present' : 'missing',
+                host: process.env.RAPIDAPI_HOST,
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                responseData: error.response?.data
+            }
+        });
+    }
+});
+
 // Search properties (GET and POST)
 app.get('/api/search', async (req, res) => {
     try {
