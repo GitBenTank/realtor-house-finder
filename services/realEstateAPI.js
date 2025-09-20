@@ -6,6 +6,14 @@ class RealEstateAPI {
         this.host = process.env.RAPIDAPI_HOST || 'realtor-data1.p.rapidapi.com';
         this.baseURL = 'https://realtor-data1.p.rapidapi.com';
         
+        console.log('RealEstateAPI Constructor Debug:', {
+            apiKey: this.apiKey ? 'present' : 'missing',
+            host: this.host,
+            baseURL: this.baseURL,
+            envRapidAPIKey: process.env.RAPIDAPI_KEY ? 'present' : 'missing',
+            envRapidAPIHost: process.env.RAPIDAPI_HOST ? 'present' : 'missing'
+        });
+        
         if (!this.apiKey) {
             console.warn('RAPIDAPI_KEY not found, will use mock data');
             this.apiKey = 'mock';
