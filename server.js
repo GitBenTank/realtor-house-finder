@@ -28,6 +28,12 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Explicit route for app.js
+app.get('/app.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(__dirname, 'app.js'));
+});
+
 // API Routes
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Realtor House Finder API is running' });
