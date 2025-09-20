@@ -46,6 +46,17 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Test API endpoint
+app.get('/api/test', async (req, res) => {
+    try {
+        const realEstateAPI = new RealEstateAPI();
+        const result = await realEstateAPI.searchProperties({ location: '10022', limit: 1 });
+        res.json({ success: true, data: result });
+    } catch (error) {
+        res.json({ success: false, error: error.message });
+    }
+});
+
 // Search properties (GET and POST)
 app.get('/api/search', async (req, res) => {
     try {
