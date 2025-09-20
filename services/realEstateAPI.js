@@ -87,11 +87,11 @@ class RealEstateAPI {
                 (error.response?.data && error.response.data.message && 
                  error.response.data.message.includes('quota'))) {
                 console.log('API quota exceeded, using mock data for demonstration');
+                return this.getMockProperties(params.location, params.limit);
             } else {
-                console.log('API failed, using mock data for demonstration');
+                console.log('API failed, throwing error instead of using mock data');
+                throw error; // Re-throw the error instead of returning mock data
             }
-            
-            return this.getMockProperties(params.location, params.limit);
         }
     }
 
