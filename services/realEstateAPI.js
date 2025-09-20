@@ -309,4 +309,4 @@ class RealEstateAPI {
     }
 }
 
-module.exports = new RealEstateAPI();
+module.exports = RealEstateAPI;
