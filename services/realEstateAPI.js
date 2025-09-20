@@ -25,6 +25,12 @@ class RealEstateAPI {
                 offset = 0
             } = params;
 
+            console.log('API Service Debug:', {
+                apiKey: this.apiKey ? 'present' : 'missing',
+                host: this.host,
+                location: params.location
+            });
+
             // If API key is mock or quota is likely exceeded, use mock data
             if (this.apiKey === 'mock') {
                 console.log('Using mock data (no API key)');
@@ -61,7 +67,12 @@ class RealEstateAPI {
 
             return this.formatProperties(response.data.data?.home_search?.properties || []);
         } catch (error) {
-            console.error('Real Estate API Error:', error.response?.data || error.message);
+            console.error('Real Estate API Error:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status,
+                statusText: error.response?.statusText
+            });
             
             // Check if it's a quota exceeded error
             if (error.message.includes('quota') || error.message.includes('exceeded') || 
