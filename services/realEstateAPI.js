@@ -46,10 +46,16 @@ class RealEstateAPI {
             }
 
             // Use the property_list endpoint for realtor-data1 API
+            const postalCode = this.extractPostalCode(location);
+            if (!postalCode) {
+                console.log('No postal code found in location, using mock data');
+                return this.getMockProperties(params.location, params.limit);
+            }
+            
             const payload = {
                 query: {
                     status: ["for_sale"],
-                    postal_code: this.extractPostalCode(location) || "10001" // Default to NYC if no postal code
+                    postal_code: postalCode
                 },
                 limit: Math.min(limit, 100),
                 offset: offset,
