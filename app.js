@@ -181,52 +181,52 @@ class RealtorHouseFinder {
 
             <!-- Property Header -->
             <div class="mb-4">
-                <h4 class="text-lg font-bold text-gray-800 mb-2 line-clamp-2 leading-tight">${property.address}</h4>
+                <h4 class="text-lg font-bold mb-2 line-clamp-2 leading-tight" style="color: var(--text-primary);">${property.address}</h4>
                 <div class="flex items-center justify-between">
                     <span class="text-3xl font-bold price-highlight">${price}</span>
                     <div class="text-right">
-                        <div class="text-sm text-gray-500">${pricePerSqft.toLocaleString()}/sq ft</div>
-                        <div class="text-xs text-gray-400">${daysOnMarket} days on market</div>
+                        <div class="text-sm" style="color: var(--text-muted);">${pricePerSqft.toLocaleString()}/sq ft</div>
+                        <div class="text-xs" style="color: var(--text-muted);">${daysOnMarket} days on market</div>
                     </div>
                 </div>
             </div>
             
             <!-- Property Details -->
             <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-xl">
-                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                <div class="flex items-center space-x-3 p-3 rounded-xl" style="background: rgba(99, 102, 241, 0.1);">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: var(--accent-primary);">
                         <i class="fas fa-bed text-white text-sm"></i>
                     </div>
                     <div>
-                        <div class="text-lg font-bold text-gray-800">${property.bedrooms}</div>
-                        <div class="text-xs text-gray-500">Bedrooms</div>
+                        <div class="text-lg font-bold" style="color: var(--text-primary);">${property.bedrooms}</div>
+                        <div class="text-xs" style="color: var(--text-muted);">Bedrooms</div>
                     </div>
                 </div>
-                <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-xl">
-                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                <div class="flex items-center space-x-3 p-3 rounded-xl" style="background: rgba(6, 182, 212, 0.1);">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: var(--accent-tertiary);">
                         <i class="fas fa-bath text-white text-sm"></i>
                     </div>
                     <div>
-                        <div class="text-lg font-bold text-gray-800">${property.bathrooms}</div>
-                        <div class="text-xs text-gray-500">Bathrooms</div>
+                        <div class="text-lg font-bold" style="color: var(--text-primary);">${property.bathrooms}</div>
+                        <div class="text-xs" style="color: var(--text-muted);">Bathrooms</div>
                     </div>
                 </div>
-                <div class="flex items-center space-x-3 p-3 bg-purple-50 rounded-xl">
-                    <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                <div class="flex items-center space-x-3 p-3 rounded-xl" style="background: rgba(139, 92, 246, 0.1);">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: var(--accent-secondary);">
                         <i class="fas fa-ruler-combined text-white text-sm"></i>
                     </div>
                     <div>
-                        <div class="text-lg font-bold text-gray-800">${property.squareFeet.toLocaleString()}</div>
-                        <div class="text-xs text-gray-500">Sq Ft</div>
+                        <div class="text-lg font-bold" style="color: var(--text-primary);">${property.squareFeet.toLocaleString()}</div>
+                        <div class="text-xs" style="color: var(--text-muted);">Sq Ft</div>
                     </div>
                 </div>
-                <div class="flex items-center space-x-3 p-3 bg-orange-50 rounded-xl">
-                    <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                <div class="flex items-center space-x-3 p-3 rounded-xl" style="background: rgba(245, 158, 11, 0.1);">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: #f59e0b;">
                         <i class="fas fa-calendar text-white text-sm"></i>
                     </div>
                     <div>
-                        <div class="text-lg font-bold text-gray-800">${daysOnMarket}</div>
-                        <div class="text-xs text-gray-500">Days Listed</div>
+                        <div class="text-lg font-bold" style="color: var(--text-primary);">${daysOnMarket}</div>
+                        <div class="text-xs" style="color: var(--text-muted);">Days Listed</div>
                     </div>
                 </div>
             </div>
@@ -242,19 +242,20 @@ class RealtorHouseFinder {
             </div>
             
             <!-- Agent Info -->
-            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div class="flex items-center justify-between pt-4" style="border-top: 1px solid var(--border-color);">
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
                         <i class="fas fa-user text-white text-xs"></i>
                     </div>
                     <div>
-                        <div class="text-sm font-medium text-gray-800">${property.agent.name}</div>
-                        <div class="text-xs text-gray-500">Real Estate Agent</div>
+                        <div class="text-sm font-medium" style="color: var(--text-primary);">${property.agent.name}</div>
+                        <div class="text-xs" style="color: var(--text-muted);">Real Estate Agent</div>
                     </div>
                 </div>
                 ${property.url ? `
                     <a href="${property.url}" target="_blank" 
-                       class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-blue-600 hover:to-purple-600 transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl">
+                       class="text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl touch-target"
+                       style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); min-height: 44px;">
                         <span>View Details</span>
                         <i class="fas fa-external-link-alt text-xs"></i>
                     </a>
