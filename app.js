@@ -1,6 +1,9 @@
 class RealtorHouseFinder {
     constructor() {
         this.properties = [];
+        this.currentPage = 1;
+        this.propertiesPerPage = 12; // Show 12 properties per page
+        this.totalPages = 1;
         this.init();
     }
 
@@ -62,6 +65,13 @@ class RealtorHouseFinder {
         if (locationInput) {
             this.setupLocationAutocomplete(locationInput);
         }
+
+        // Pagination controls
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        
+        if (prevPageBtn) prevPageBtn.addEventListener('click', () => this.previousPage());
+        if (nextPageBtn) nextPageBtn.addEventListener('click', () => this.nextPage());
     }
 
     async checkAPIHealth() {
@@ -90,7 +100,7 @@ class RealtorHouseFinder {
             minPrice: parseInt(document.getElementById('minPrice')?.value) || 0,
             bedrooms: parseInt(document.getElementById('bedrooms')?.value) || 0,
             bathrooms: 0, // Not available in current form
-            limit: parseInt(document.getElementById('limit')?.value) || 50,
+            limit: parseInt(document.getElementById('limit')?.value) || 100,
             dateRange: document.getElementById('dateRange')?.value || 'any'
         };
         
@@ -158,15 +168,69 @@ class RealtorHouseFinder {
                     <p class="text-sm">Try adjusting your search parameters.</p>
                 </div>
             `;
+            this.hidePagination();
         } else {
-            properties.forEach(property => {
-                const propertyCard = this.createPropertyCard(property);
-                propertiesList.appendChild(propertyCard);
-            });
+            this.totalPages = Math.ceil(properties.length / this.propertiesPerPage);
+            this.currentPage = 1; // Reset to first page
+            this.updatePagination();
+            this.displayCurrentPage();
         }
 
         resultsSection.classList.remove('hidden');
         resultsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    displayCurrentPage() {
+        const propertiesList = document.getElementById('propertiesList');
+        const startIndex = (this.currentPage - 1) * this.propertiesPerPage;
+        const endIndex = startIndex + this.propertiesPerPage;
+        const currentPageProperties = this.properties.slice(startIndex, endIndex);
+        
+        propertiesList.innerHTML = '';
+        currentPageProperties.forEach(property => {
+            const propertyCard = this.createPropertyCard(property);
+            propertiesList.appendChild(propertyCard);
+        });
+    }
+
+    updatePagination() {
+        const paginationControls = document.getElementById('paginationControls');
+        const currentPageSpan = document.getElementById('currentPage');
+        const totalPagesSpan = document.getElementById('totalPages');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+
+        if (this.totalPages > 1) {
+            paginationControls.classList.remove('hidden');
+            currentPageSpan.textContent = this.currentPage;
+            totalPagesSpan.textContent = this.totalPages;
+            
+            prevPageBtn.disabled = this.currentPage === 1;
+            nextPageBtn.disabled = this.currentPage === this.totalPages;
+        } else {
+            this.hidePagination();
+        }
+    }
+
+    hidePagination() {
+        const paginationControls = document.getElementById('paginationControls');
+        paginationControls.classList.add('hidden');
+    }
+
+    previousPage() {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.displayCurrentPage();
+            this.updatePagination();
+        }
+    }
+
+    nextPage() {
+        if (this.currentPage < this.totalPages) {
+            this.currentPage++;
+            this.displayCurrentPage();
+            this.updatePagination();
+        }
     }
 
     createPropertyCard(property) {
