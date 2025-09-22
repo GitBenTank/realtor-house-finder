@@ -593,6 +593,11 @@ class RealEstateAPI {
             if (state) {
                 return { city: city, state_code: state };
             }
+            
+            // If city is not in our map, try to use it directly
+            // The API might be able to handle it without a state
+            console.log(`Unknown city: ${city}, trying without state`);
+            return { city: city };
         }
         
         // If we can't parse the location, return null (will use mock data)

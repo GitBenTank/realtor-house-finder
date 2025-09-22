@@ -870,7 +870,7 @@ class RealtorHouseFinder {
         input.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
             
-            if (query.length < 2) {
+            if (query.length < 1) {
                 this.hideSuggestions();
                 return;
             }
@@ -880,7 +880,13 @@ class RealtorHouseFinder {
                 location.toLowerCase().includes(query)
             ).slice(0, 8); // Limit to 8 suggestions
 
-            this.showSuggestions(currentSuggestions);
+            // Always show suggestions if there are any matches
+            if (currentSuggestions.length > 0) {
+                this.showSuggestions(currentSuggestions);
+            } else {
+                // If no matches, hide suggestions but allow free text input
+                this.hideSuggestions();
+            }
         });
 
         input.addEventListener('keydown', (e) => {
