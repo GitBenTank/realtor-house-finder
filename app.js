@@ -45,6 +45,17 @@ class RealtorHouseFinder {
         if (exportBtn) exportBtn.addEventListener('click', () => this.handleExport());
         if (clearBtn) clearBtn.addEventListener('click', () => this.handleClear());
         if (testBtn) testBtn.addEventListener('click', () => this.handleTestSearch());
+        
+        // Analytics button
+        const analyticsBtn = document.getElementById('analyticsBtn');
+        const analyticsModal = document.getElementById('analyticsModal');
+        const closeAnalytics = document.getElementById('closeAnalytics');
+        
+        if (analyticsBtn) analyticsBtn.addEventListener('click', () => this.showAnalytics());
+        if (closeAnalytics) closeAnalytics.addEventListener('click', () => this.hideAnalytics());
+        if (analyticsModal) analyticsModal.addEventListener('click', (e) => {
+            if (e.target === analyticsModal) this.hideAnalytics();
+        });
     }
 
     async checkAPIHealth() {
@@ -498,6 +509,99 @@ class RealtorHouseFinder {
         
         const lowerLocation = location.toLowerCase().trim();
         return cityMappings[lowerLocation] || location;
+    }
+
+    async showAnalytics() {
+        try {
+            const response = await fetch('/api/analytics');
+            const data = await response.json();
+            
+            const modal = document.getElementById('analyticsModal');
+            const content = document.getElementById('analyticsContent');
+            
+            content.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="p-6 rounded-xl" style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+                        <div class="text-center">
+                            <i class="fas fa-search text-3xl mb-3" style="color: var(--accent-primary);"></i>
+                            <h4 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Total Searches</h4>
+                            <p class="text-3xl font-bold" style="color: var(--accent-primary);">${data.totalSearches}</p>
+                        </div>
+                    </div>
+                    <div class="p-6 rounded-xl" style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+                        <div class="text-center">
+                            <i class="fas fa-bolt text-3xl mb-3" style="color: var(--accent-tertiary);"></i>
+                            <h4 class="text-xl font-bold mb-2" style="color: var(--text-primary);">API Calls</h4>
+                            <p class="text-3xl font-bold" style="color: var(--accent-tertiary);">${data.totalApiCalls}</p>
+                        </div>
+                    </div>
+                    <div class="p-6 rounded-xl" style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+                        <div class="text-center">
+                            <i class="fas fa-clock text-3xl mb-3" style="color: var(--accent-secondary);"></i>
+                            <h4 class="text-xl font-bold mb-2" style="color: var(--text-primary);">Uptime</h4>
+                            <p class="text-lg font-bold" style="color: var(--accent-secondary);">${Math.floor(data.uptime / 3600)}h ${Math.floor((data.uptime % 3600) / 60)}m</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-6 rounded-xl" style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+                        <h4 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
+                            <i class="fas fa-map-marker-alt mr-2" style="color: var(--accent-primary);"></i>
+                            Top Locations
+                        </h4>
+                        <div class="space-y-2">
+                            ${data.topLocations.map(location => `
+                                <div class="flex justify-between items-center p-2 rounded-lg" style="background: var(--bg-primary);">
+                                    <span style="color: var(--text-primary);">${location.location}</span>
+                                    <span class="px-2 py-1 rounded-full text-sm font-bold" style="background: var(--accent-primary); color: white;">${location.count}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="p-6 rounded-xl" style="background: var(--bg-tertiary); border: 1px solid var(--border-color);">
+                        <h4 class="text-xl font-bold mb-4" style="color: var(--text-primary);">
+                            <i class="fas fa-history mr-2" style="color: var(--accent-tertiary);"></i>
+                            Recent Searches
+                        </h4>
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            ${data.recentSearches.map(search => `
+                                <div class="p-3 rounded-lg" style="background: var(--bg-primary);">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <p class="font-medium" style="color: var(--text-primary);">${search.location}</p>
+                                            <p class="text-sm" style="color: var(--text-muted);">${search.propertyType} • ${search.limit} results</p>
+                                        </div>
+                                        <span class="text-xs" style="color: var(--text-muted);">${new Date(search.timestamp).toLocaleTimeString()}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 rounded-xl" style="background: var(--bg-primary); border: 1px solid var(--border-color);">
+                    <h4 class="text-lg font-bold mb-2" style="color: var(--text-primary);">
+                        <i class="fas fa-info-circle mr-2" style="color: var(--accent-primary);"></i>
+                        Today's Stats
+                    </h4>
+                    <p style="color: var(--text-secondary);">
+                        Searches: ${data.todayStats.searches} | API Calls: ${data.todayStats.apiCalls}
+                    </p>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        } catch (error) {
+            console.error('Error loading analytics:', error);
+            this.showError('Failed to load analytics data');
+        }
+    }
+
+    hideAnalytics() {
+        const modal = document.getElementById('analyticsModal');
+        modal.classList.add('hidden');
     }
 }
 

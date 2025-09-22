@@ -65,11 +65,8 @@ class RealEstateAPI {
                 }
             };
 
-            // Add optional parameters if provided
-            if (minPrice > 0) payload.query.price_min = minPrice;
-            if (maxPrice > 0 && maxPrice < 10000000) payload.query.price_max = maxPrice;
-            if (bedrooms > 0) payload.query.beds_min = bedrooms;
-            if (bathrooms > 0) payload.query.baths_min = bathrooms;
+            // Note: The realtor-data1 API doesn't support price/bedroom/bathroom filters
+            // We'll filter the results on the client side instead
 
             const response = await axios.post(`${this.baseURL}/property_list/`, payload, {
                 headers: {
@@ -79,7 +76,10 @@ class RealEstateAPI {
                 }
             });
 
-            return this.formatProperties(response.data.data?.home_search?.properties || []);
+            const properties = this.formatProperties(response.data.data?.home_search?.properties || []);
+            
+            // Apply client-side filtering since the API doesn't support these filters
+            return this.applyFilters(properties, { minPrice, maxPrice, bedrooms, bathrooms });
         } catch (error) {
             console.error('Real Estate API Error:', {
                 message: error.message,
@@ -603,6 +603,24 @@ class RealEstateAPI {
         // Try to extract postal code from location string
         const postalMatch = location.match(/\b\d{5}(-\d{4})?\b/);
         return postalMatch ? postalMatch[0] : null;
+    }
+
+    applyFilters(properties, filters) {
+        const { minPrice, maxPrice, bedrooms, bathrooms } = filters;
+        
+        return properties.filter(property => {
+            // Price filtering
+            if (minPrice > 0 && property.price < minPrice) return false;
+            if (maxPrice > 0 && maxPrice < 10000000 && property.price > maxPrice) return false;
+            
+            // Bedroom filtering
+            if (bedrooms > 0 && property.bedrooms < bedrooms) return false;
+            
+            // Bathroom filtering
+            if (bathrooms > 0 && property.bathrooms < bathrooms) return false;
+            
+            return true;
+        });
     }
 }
 

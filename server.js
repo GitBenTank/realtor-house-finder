@@ -6,6 +6,15 @@ const RealEstateAPI = require('./services/realEstateAPI');
 const excelService = require('./services/excelService');
 const cronService = require('./services/cronService');
 
+// Simple analytics tracking
+const analytics = {
+    totalSearches: 0,
+    totalApiCalls: 0,
+    searches: [],
+    startTime: new Date(),
+    dailyStats: {}
+};
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -35,8 +44,8 @@ app.get('/app.js', (req, res) => {
 
 // API Routes
 app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
+    res.json({
+        status: 'OK',
         message: 'Realtor House Finder API is running',
         env: {
             hasRapidAPIKey: !!process.env.RAPIDAPI_KEY,
@@ -45,6 +54,60 @@ app.get('/api/health', (req, res) => {
         }
     });
 });
+
+// Analytics endpoint
+app.get('/api/analytics', (req, res) => {
+    const today = new Date().toDateString();
+    const todayStats = analytics.dailyStats[today] || { searches: 0, apiCalls: 0 };
+    
+    res.json({
+        totalSearches: analytics.totalSearches,
+        totalApiCalls: analytics.totalApiCalls,
+        todayStats: todayStats,
+        uptime: Math.floor((new Date() - analytics.startTime) / 1000),
+        recentSearches: analytics.searches.slice(-10).reverse(),
+        topLocations: getTopLocations(),
+        status: 'active'
+    });
+});
+
+// Helper function to get top locations
+function getTopLocations() {
+    const locationCounts = {};
+    analytics.searches.forEach(search => {
+        const location = search.location || 'Unknown';
+        locationCounts[location] = (locationCounts[location] || 0) + 1;
+    });
+    
+    return Object.entries(locationCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([location, count]) => ({ location, count }));
+}
+
+// Helper function to track searches
+function trackSearch(req, searchParams) {
+    const today = new Date().toDateString();
+    analytics.totalSearches++;
+    analytics.totalApiCalls++;
+    analytics.dailyStats[today] = analytics.dailyStats[today] || { searches: 0, apiCalls: 0 };
+    analytics.dailyStats[today].searches++;
+    analytics.dailyStats[today].apiCalls++;
+    
+    analytics.searches.push({
+        timestamp: new Date(),
+        location: searchParams.location,
+        propertyType: searchParams.propertyType,
+        limit: searchParams.limit,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip || req.connection.remoteAddress
+    });
+
+    // Keep only last 100 searches to prevent memory issues
+    if (analytics.searches.length > 100) {
+        analytics.searches = analytics.searches.slice(-100);
+    }
+}
 
 // Test API endpoint
 app.get('/api/test', async (req, res) => {
@@ -128,6 +191,9 @@ app.get('/api/search', async (req, res) => {
             limit: Math.min(limit, 100)
         };
 
+        // Track this search
+        trackSearch(req, searchParams);
+
         const realEstateAPI = new RealEstateAPI();
         const properties = await realEstateAPI.searchProperties(searchParams);
         res.json({ success: true, data: properties, count: properties.length });
@@ -159,6 +225,9 @@ app.post('/api/search', async (req, res) => {
             bathrooms: bathrooms || 0,
             limit: Math.min(limit, 100)
         };
+
+        // Track this search
+        trackSearch(req, searchParams);
 
         const realEstateAPI = new RealEstateAPI();
         const properties = await realEstateAPI.searchProperties(searchParams);
