@@ -606,7 +606,7 @@ class RealEstateAPI {
     }
 
     applyFilters(properties, filters) {
-        const { minPrice, maxPrice, bedrooms, bathrooms, propertyType } = filters;
+        const { minPrice, maxPrice, bedrooms, bathrooms, propertyType, dateRange } = filters;
         
         return properties.filter(property => {
             // Price filtering
@@ -631,6 +631,16 @@ class RealEstateAPI {
                 
                 const allowedTypes = typeMapping[propertyType] || [propertyType];
                 if (!allowedTypes.includes(property.propertyType)) return false;
+            }
+            
+            // Date range filtering
+            if (dateRange && dateRange !== 'any') {
+                const daysAgo = parseInt(dateRange);
+                const propertyDate = new Date(property.listDate);
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - daysAgo);
+                
+                if (propertyDate < cutoffDate) return false;
             }
             
             return true;

@@ -56,6 +56,12 @@ class RealtorHouseFinder {
         if (analyticsModal) analyticsModal.addEventListener('click', (e) => {
             if (e.target === analyticsModal) this.hideAnalytics();
         });
+
+        // Location autocomplete
+        const locationInput = document.getElementById('location');
+        if (locationInput) {
+            this.setupLocationAutocomplete(locationInput);
+        }
     }
 
     async checkAPIHealth() {
@@ -84,7 +90,8 @@ class RealtorHouseFinder {
             minPrice: parseInt(document.getElementById('minPrice')?.value) || 0,
             bedrooms: parseInt(document.getElementById('bedrooms')?.value) || 0,
             bathrooms: 0, // Not available in current form
-            limit: parseInt(document.getElementById('limit')?.value) || 50
+            limit: parseInt(document.getElementById('limit')?.value) || 50,
+            dateRange: document.getElementById('dateRange')?.value || 'any'
         };
         
         // Only add maxPrice if it's not the default value
@@ -367,7 +374,8 @@ class RealtorHouseFinder {
             minPrice: parseInt(document.getElementById('minPrice')?.value) || 0,
             bedrooms: parseInt(document.getElementById('bedrooms')?.value) || 0,
             bathrooms: 0, // Not available in current form
-            limit: parseInt(document.getElementById('limit')?.value) || 5
+            limit: parseInt(document.getElementById('limit')?.value) || 5,
+            dateRange: document.getElementById('dateRange')?.value || 'any'
         };
         
         // Only add maxPrice if it's not the default value
@@ -740,6 +748,157 @@ class RealtorHouseFinder {
         );
 
         return analysis;
+    }
+
+    setupLocationAutocomplete(input) {
+        const suggestionsContainer = document.getElementById('locationSuggestions');
+        let currentSuggestions = [];
+        let selectedIndex = -1;
+
+        // Comprehensive list of US cities and states
+        const locations = [
+            // Major Cities
+            'New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ',
+            'Philadelphia, PA', 'San Antonio, TX', 'San Diego, CA', 'Dallas, TX', 'San Jose, CA',
+            'Austin, TX', 'Jacksonville, FL', 'Fort Worth, TX', 'Columbus, OH', 'Charlotte, NC',
+            'San Francisco, CA', 'Indianapolis, IN', 'Seattle, WA', 'Denver, CO', 'Washington, DC',
+            'Boston, MA', 'El Paso, TX', 'Detroit, MI', 'Portland, OR', 'Las Vegas, NV',
+            'Milwaukee, WI', 'Albuquerque, NM', 'Tucson, AZ', 'Fresno, CA', 'Sacramento, CA',
+            'Mesa, AZ', 'Kansas City, MO', 'Atlanta, GA', 'Long Beach, CA', 'Colorado Springs, CO',
+            'Raleigh, NC', 'Miami, FL', 'Virginia Beach, VA', 'Omaha, NE', 'Oakland, CA',
+            'Minneapolis, MN', 'Tulsa, OK', 'Arlington, TX', 'Tampa, FL', 'New Orleans, LA',
+            'Wichita, KS', 'Bakersfield, CA', 'Cleveland, OH', 'Aurora, CO', 'Anaheim, CA',
+            'Honolulu, HI', 'Santa Ana, CA', 'Corpus Christi, TX', 'Riverside, CA', 'Lexington, KY',
+            'Stockton, CA', 'Toledo, OH', 'St. Paul, MN', 'Newark, NJ', 'Greensboro, NC',
+            'Plano, TX', 'Henderson, NV', 'Lincoln, NE', 'Buffalo, NY', 'Jersey City, NJ',
+            'Chula Vista, CA', 'Fort Wayne, IN', 'Orlando, FL', 'St. Petersburg, FL', 'Chandler, AZ',
+            'Laredo, TX', 'Norfolk, VA', 'Durham, NC', 'Madison, WI', 'Lubbock, TX',
+            'Irvine, CA', 'Winston Salem, NC', 'Glendale, AZ', 'Garland, TX', 'Hialeah, FL',
+            'Reno, NV', 'Chesapeake, VA', 'Gilbert, AZ', 'Baton Rouge, LA', 'Irving, TX',
+            'Scottsdale, AZ', 'North Las Vegas, NV', 'Fremont, CA', 'Boise, ID', 'Richmond, VA',
+            'San Bernardino, CA', 'Birmingham, AL', 'Spokane, WA', 'Rochester, NY', 'Des Moines, IA',
+            'Modesto, CA', 'Fayetteville, NC', 'Tacoma, WA', 'Oxnard, CA', 'Fontana, CA',
+            'Columbus, GA', 'Montgomery, AL', 'Moreno Valley, CA', 'Shreveport, LA', 'Aurora, IL',
+            'Yonkers, NY', 'Akron, OH', 'Huntington Beach, CA', 'Glendale, CA', 'Grand Rapids, MI',
+            'Salt Lake City, UT', 'Tallahassee, FL', 'Huntsville, AL', 'Grand Prairie, TX',
+            'Worcester, MA', 'Newport News, VA', 'Brownsville, TX', 'Overland Park, KS',
+            'Santa Clarita, CA', 'Providence, RI', 'Garden Grove, CA', 'Oceanside, CA',
+            'Jackson, MS', 'Fort Lauderdale, FL', 'Santa Rosa, CA', 'Rancho Cucamonga, CA',
+            'Port St. Lucie, FL', 'Tempe, AZ', 'Ontario, CA', 'Vancouver, WA', 'Sioux Falls, SD',
+            'Springfield, MO', 'Peoria, IL', 'Pembroke Pines, FL', 'Elk Grove, CA', 'Rockford, IL',
+            'Palmdale, CA', 'Corona, CA', 'Salinas, CA', 'Pomona, CA', 'Pasadena, TX',
+            'Joliet, IL', 'Paterson, NJ', 'Torrance, CA', 'Bridgeport, CT', 'Hayward, CA',
+            'Sunnyvale, CA', 'Escondido, CA', 'Lakewood, CO', 'Hollywood, FL', 'Fort Collins, CO',
+            'Hampton, VA', 'Thousand Oaks, CA', 'West Valley City, UT', 'Boulder, CO', 'West Covina, CA',
+            'Ventura, CA', 'Elgin, IL', 'Richardson, TX', 'Downey, CA', 'Costa Mesa, CA',
+            'Miami Gardens, FL', 'Carlsbad, CA', 'Westminster, CO', 'Santa Clara, CA', 'Clearwater, FL',
+            'Pearland, TX', 'Concord, CA', 'Topeka, KS', 'Simi Valley, CA', 'Olathe, KS',
+            'Thornton, CO', 'Carrollton, TX', 'Midland, TX', 'West Palm Beach, FL', 'Cedar Rapids, IA',
+            'Elizabeth, NJ', 'Round Rock, TX', 'Columbia, SC', 'Sterling Heights, MI', 'Kent, WA',
+            'Fargo, ND', 'Clarksville, TN', 'Palm Bay, FL', 'Pompano Beach, FL', 'Lancaster, CA',
+            'Chico, CA', 'Savannah, GA', 'Mesquite, TX', 'Rocky Mount, NC', 'Westminster, CA',
+            'Daly City, CA', 'Santa Monica, CA', 'Burbank, CA', 'Pasadena, CA', 'Allen, TX',
+            'High Point, NC', 'Nashville, TN', 'Memphis, TN', 'Knoxville, TN', 'Chattanooga, TN',
+            'Murfreesboro, TN', 'Franklin, TN', 'Jackson, TN', 'Johnson City, TN', 'Kingsport, TN',
+            'Clarksville, TN', 'Smyrna, TN', 'Brentwood, TN', 'Bartlett, TN', 'Hendersonville, TN'
+        ];
+
+        input.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            
+            if (query.length < 2) {
+                this.hideSuggestions();
+                return;
+            }
+
+            // Filter locations based on query
+            currentSuggestions = locations.filter(location => 
+                location.toLowerCase().includes(query)
+            ).slice(0, 8); // Limit to 8 suggestions
+
+            this.showSuggestions(currentSuggestions);
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (!suggestionsContainer.classList.contains('hidden')) {
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        selectedIndex = Math.min(selectedIndex + 1, currentSuggestions.length - 1);
+                        this.updateSelection();
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        selectedIndex = Math.max(selectedIndex - 1, -1);
+                        this.updateSelection();
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedIndex >= 0 && currentSuggestions[selectedIndex]) {
+                            input.value = currentSuggestions[selectedIndex];
+                            this.hideSuggestions();
+                        }
+                        break;
+                    case 'Escape':
+                        this.hideSuggestions();
+                        break;
+                }
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!input.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                this.hideSuggestions();
+            }
+        });
+    }
+
+    showSuggestions(suggestions) {
+        const suggestionsContainer = document.getElementById('locationSuggestions');
+        
+        if (suggestions.length === 0) {
+            this.hideSuggestions();
+            return;
+        }
+
+        const html = suggestions.map((suggestion, index) => `
+            <div class="suggestion-item px-4 py-3 cursor-pointer hover:bg-opacity-20 hover:bg-blue-500 transition-colors duration-200 flex items-center" 
+                 data-index="${index}" style="color: var(--text-primary);">
+                <i class="fas fa-map-marker-alt mr-3 text-sm" style="color: var(--accent-primary);"></i>
+                <span>${suggestion}</span>
+            </div>
+        `).join('');
+
+        suggestionsContainer.innerHTML = html;
+        suggestionsContainer.classList.remove('hidden');
+
+        // Add click handlers
+        suggestionsContainer.querySelectorAll('.suggestion-item').forEach((item, index) => {
+            item.addEventListener('click', () => {
+                document.getElementById('location').value = suggestions[index];
+                this.hideSuggestions();
+            });
+        });
+    }
+
+    updateSelection() {
+        const suggestionsContainer = document.getElementById('locationSuggestions');
+        const items = suggestionsContainer.querySelectorAll('.suggestion-item');
+        
+        items.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.style.backgroundColor = 'rgba(99, 102, 241, 0.2)';
+            } else {
+                item.style.backgroundColor = 'transparent';
+            }
+        });
+    }
+
+    hideSuggestions() {
+        const suggestionsContainer = document.getElementById('locationSuggestions');
+        suggestionsContainer.classList.add('hidden');
+        selectedIndex = -1;
     }
 }
 
