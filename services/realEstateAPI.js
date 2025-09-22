@@ -3,8 +3,8 @@ const axios = require('axios');
 class RealEstateAPI {
     constructor() {
         this.apiKey = process.env.RAPIDAPI_KEY;
-        this.host = process.env.RAPIDAPI_HOST || 'realtor-data1.p.rapidapi.com';
-        this.baseURL = 'https://realtor-data1.p.rapidapi.com';
+        this.host = process.env.RAPIDAPI_HOST || 'realty-in-us.p.rapidapi.com';
+        this.baseURL = 'https://realty-in-us.p.rapidapi.com';
         
         // RentCast API configuration (alternative)
         this.rentcastApiKey = process.env.RENTCAST_API_KEY;
@@ -61,7 +61,7 @@ class RealEstateAPI {
                 return this.getMockProperties(params.location, params.limit);
             }
 
-            // Use the property_list endpoint for realtor-data1 API
+            // Use the properties/v3/list endpoint for realty-in-us API
             const searchQuery = this.parseLocation(location);
             if (!searchQuery) {
                 console.log('Could not parse location, using mock data');
@@ -69,22 +69,25 @@ class RealEstateAPI {
             }
             
             const payload = {
-                query: {
-                    status: ["for_sale"],
-                    ...searchQuery
-                },
-                limit: Math.min(limit, 100),
+                limit: Math.min(limit, 200),
                 offset: offset,
+                status: ["for_sale", "ready_to_build"],
                 sort: {
                     direction: "desc",
                     field: "list_date"
-                }
             };
 
-            // Note: The realtor-data1 API doesn't support price/bedroom/bathroom filters
-            // We'll filter the results on the client side instead
+            // Add location parameters based on what we parsed
+            if (searchQuery.postal_code) {
+                payload.postal_code = searchQuery.postal_code;
+            } else if (searchQuery.city && searchQuery.state_code) {
+                payload.city = searchQuery.city;
+                payload.state_code = searchQuery.state_code;
+            } else if (searchQuery.city) {
+                payload.city = searchQuery.city;
+            }
 
-            const response = await axios.post(`${this.baseURL}/property_list/`, payload, {
+            const response = await axios.post(`${this.baseURL}/properties/v3/list`, payload, {
                 headers: {
                     'X-RapidAPI-Key': this.apiKey,
                     'X-RapidAPI-Host': this.host,
@@ -92,7 +95,7 @@ class RealEstateAPI {
                 }
             });
 
-            const properties = this.formatProperties(response.data.data?.home_search?.properties || []);
+            const properties = this.formatProperties(response.data?.data?.home_search?.properties || response.data?.properties || []);
             
             // Apply client-side filtering since the API doesn't support these filters
             const filteredProperties = this.applyFilters(properties, { minPrice, maxPrice, bedrooms, bathrooms, propertyType, dateRange });
