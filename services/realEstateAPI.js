@@ -606,7 +606,7 @@ class RealEstateAPI {
     }
 
     applyFilters(properties, filters) {
-        const { minPrice, maxPrice, bedrooms, bathrooms } = filters;
+        const { minPrice, maxPrice, bedrooms, bathrooms, propertyType } = filters;
         
         return properties.filter(property => {
             // Price filtering
@@ -618,6 +618,20 @@ class RealEstateAPI {
             
             // Bathroom filtering
             if (bathrooms > 0 && property.bathrooms < bathrooms) return false;
+            
+            // Property type filtering
+            if (propertyType && propertyType !== 'any') {
+                // Map frontend property types to API property types
+                const typeMapping = {
+                    'house': ['single_family', 'townhomes', 'condo'],
+                    'condo': ['condo', 'townhomes'],
+                    'townhouse': ['townhomes'],
+                    'single_family': ['single_family']
+                };
+                
+                const allowedTypes = typeMapping[propertyType] || [propertyType];
+                if (!allowedTypes.includes(property.propertyType)) return false;
+            }
             
             return true;
         });
