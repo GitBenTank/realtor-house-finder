@@ -96,7 +96,7 @@ class RealEstateAPI {
                 }
             });
 
-            const properties = this.formatProperties(response.data?.data?.home_search?.properties || response.data?.properties || []);
+            const properties = this.formatProperties(response.data?.data?.home_search?.results || response.data?.data?.home_search?.properties || response.data?.properties || []);
             
             // Apply client-side filtering since the API doesn't support these filters
             const filteredProperties = this.applyFilters(properties, { minPrice, maxPrice, bedrooms, bathrooms, propertyType, dateRange: params.dateRange });
