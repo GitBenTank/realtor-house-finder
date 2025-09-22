@@ -287,28 +287,40 @@ class RealtorHouseFinder {
         this.hideMessages();
 
         try {
-            const response = await fetch('/api/export', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    properties: this.properties,
-                    filename: `realtor_listings_${new Date().toISOString().split('T')[0]}.xlsx`
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.showSuccess(`Excel file created successfully! ${this.properties.length} properties exported.`);
-                this.downloadFile(data.filePath);
-            } else {
-                this.showError(data.error || 'Export failed. Please try again.');
+            // Check if XLSX library is loaded
+            if (typeof XLSX === 'undefined') {
+                throw new Error('Excel library not loaded. Please refresh the page and try again.');
             }
+
+            // Prepare data for Excel
+            const excelData = this.prepareExcelData(this.properties);
+            
+            // Create workbook
+            const workbook = XLSX.utils.book_new();
+            
+            // Add main properties sheet
+            const propertiesSheet = XLSX.utils.json_to_sheet(excelData.properties);
+            XLSX.utils.book_append_sheet(workbook, propertiesSheet, 'Properties');
+            
+            // Add summary sheet
+            const summarySheet = XLSX.utils.json_to_sheet(excelData.summary);
+            XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+            
+            // Add market analysis sheet
+            const analysisSheet = XLSX.utils.json_to_sheet(excelData.analysis);
+            XLSX.utils.book_append_sheet(workbook, analysisSheet, 'Market Analysis');
+
+            // Generate filename
+            const timestamp = new Date().toISOString().split('T')[0];
+            const filename = `realtor_listings_${timestamp}.xlsx`;
+
+            // Download the file
+            XLSX.writeFile(workbook, filename);
+            
+            this.showSuccess(`Excel file downloaded successfully! ${this.properties.length} properties exported.`);
         } catch (error) {
             console.error('Export error:', error);
-            this.showError('Export failed. Please check your connection and try again.');
+            this.showError('Export failed: ' + error.message);
         } finally {
             this.showLoading(false);
         }
@@ -602,6 +614,121 @@ class RealtorHouseFinder {
     hideAnalytics() {
         const modal = document.getElementById('analyticsModal');
         modal.classList.add('hidden');
+    }
+
+    prepareExcelData(properties) {
+        const propertiesData = properties.map(property => ({
+            'Property ID': property.id,
+            'Address': property.address,
+            'Price': property.price,
+            'Price Formatted': this.formatCurrency(property.price),
+            'Bedrooms': property.bedrooms,
+            'Bathrooms': property.bathrooms,
+            'Square Feet': property.squareFeet,
+            'Lot Size (sq ft)': property.lotSize,
+            'Property Type': property.propertyType,
+            'Status': property.status,
+            'List Date': new Date(property.listDate).toLocaleDateString(),
+            'Year Built': property.yearBuilt,
+            'Garage Spaces': property.garage,
+            'Pool': property.pool ? 'Yes' : 'No',
+            'Agent Name': property.agent.name,
+            'Agent Phone': property.agent.phone,
+            'Agent Email': property.agent.email,
+            'Latitude': property.coordinates.lat,
+            'Longitude': property.coordinates.lng,
+            'Property URL': property.url,
+            'Price per Sq Ft': property.squareFeet > 0 ? Math.round(property.price / property.squareFeet) : 0,
+            'Days on Market': Math.floor((new Date() - new Date(property.listDate)) / (1000 * 60 * 60 * 24)),
+            'Last Updated': new Date(property.lastUpdated).toLocaleString()
+        }));
+
+        const summary = this.generateSummary(properties);
+        const analysis = this.generateMarketAnalysis(properties);
+
+        return {
+            properties: propertiesData,
+            summary: summary,
+            analysis: analysis
+        };
+    }
+
+    generateSummary(properties) {
+        const totalProperties = properties.length;
+        const totalValue = properties.reduce((sum, p) => sum + p.price, 0);
+        const avgPrice = totalValue / totalProperties;
+        const minPrice = Math.min(...properties.map(p => p.price));
+        const maxPrice = Math.max(...properties.map(p => p.price));
+        
+        const propertyTypes = {};
+        const bedroomCounts = {};
+        const bathroomCounts = {};
+
+        properties.forEach(property => {
+            propertyTypes[property.propertyType] = (propertyTypes[property.propertyType] || 0) + 1;
+            bedroomCounts[property.bedrooms] = (bedroomCounts[property.bedrooms] || 0) + 1;
+            bathroomCounts[property.bathrooms] = (bathroomCounts[property.bathrooms] || 0) + 1;
+        });
+
+        return [
+            { 'Metric': 'Total Properties', 'Value': totalProperties },
+            { 'Metric': 'Total Market Value', 'Value': this.formatCurrency(totalValue) },
+            { 'Metric': 'Average Price', 'Value': this.formatCurrency(avgPrice) },
+            { 'Metric': 'Lowest Price', 'Value': this.formatCurrency(minPrice) },
+            { 'Metric': 'Highest Price', 'Value': this.formatCurrency(maxPrice) },
+            { 'Metric': 'Report Generated', 'Value': new Date().toLocaleString() },
+            { 'Metric': 'Data Source', 'Value': 'RapidAPI Real Estate' },
+            { 'Metric': '', 'Value': '' },
+            { 'Metric': 'Property Types', 'Value': '' },
+            ...Object.entries(propertyTypes).map(([type, count]) => ({
+                'Metric': `  ${type}`, 'Value': count
+            })),
+            { 'Metric': '', 'Value': '' },
+            { 'Metric': 'Bedroom Distribution', 'Value': '' },
+            ...Object.entries(bedroomCounts).map(([beds, count]) => ({
+                'Metric': `  ${beds} bedrooms`, 'Value': count
+            })),
+            { 'Metric': '', 'Value': '' },
+            { 'Metric': 'Bathroom Distribution', 'Value': '' },
+            ...Object.entries(bathroomCounts).map(([baths, count]) => ({
+                'Metric': `  ${baths} bathrooms`, 'Value': count
+            }))
+        ];
+    }
+
+    generateMarketAnalysis(properties) {
+        const priceRanges = [
+            { range: 'Under $200K', min: 0, max: 200000 },
+            { range: '$200K - $400K', min: 200000, max: 400000 },
+            { range: '$400K - $600K', min: 400000, max: 600000 },
+            { range: '$600K - $800K', min: 600000, max: 800000 },
+            { range: '$800K - $1M', min: 800000, max: 1000000 },
+            { range: 'Over $1M', min: 1000000, max: Infinity }
+        ];
+
+        const analysis = priceRanges.map(range => {
+            const count = properties.filter(p => p.price >= range.min && p.price < range.max).length;
+            const percentage = properties.length > 0 ? ((count / properties.length) * 100).toFixed(1) : 0;
+            return {
+                'Price Range': range.range,
+                'Count': count,
+                'Percentage': `${percentage}%`
+            };
+        });
+
+        // Add additional analysis
+        const avgDaysOnMarket = properties.reduce((sum, p) => {
+            return sum + Math.floor((new Date() - new Date(p.listDate)) / (1000 * 60 * 60 * 24));
+        }, 0) / properties.length;
+
+        analysis.push(
+            { 'Price Range': '', 'Count': '', 'Percentage': '' },
+            { 'Price Range': 'Average Days on Market', 'Count': Math.round(avgDaysOnMarket), 'Percentage': 'days' },
+            { 'Price Range': 'Properties with Pool', 'Count': properties.filter(p => p.pool).length, 'Percentage': `${((properties.filter(p => p.pool).length / properties.length) * 100).toFixed(1)}%` },
+            { 'Price Range': 'Properties with Garage', 'Count': properties.filter(p => p.garage > 0).length, 'Percentage': `${((properties.filter(p => p.garage > 0).length / properties.length) * 100).toFixed(1)}%` }
+        );
+
+        return analysis;
     }
 }
 
