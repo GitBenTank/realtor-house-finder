@@ -6,6 +6,10 @@ class RealEstateAPI {
         this.host = process.env.RAPIDAPI_HOST || 'realtor-data1.p.rapidapi.com';
         this.baseURL = 'https://realtor-data1.p.rapidapi.com';
         
+        // RentCast API configuration (alternative)
+        this.rentcastApiKey = process.env.RENTCAST_API_KEY;
+        this.rentcastBaseURL = 'https://api.rentcast.io/v1';
+        
         console.log('RealEstateAPI Constructor Debug:', {
             apiKey: this.apiKey ? 'present' : 'missing',
             host: this.host,
@@ -109,7 +113,23 @@ class RealEstateAPI {
             if (error.message.includes('quota') || error.message.includes('exceeded') || 
                 (error.response?.data && error.response.data.message && 
                  error.response.data.message.includes('quota'))) {
-                console.log('API quota exceeded, using mock data for demonstration');
+                console.log('Primary API quota exceeded, trying RentCast API...');
+                
+                // Try RentCast API as fallback
+                if (this.rentcastApiKey) {
+                    try {
+                        const rentcastData = await this.searchWithRentCast(params);
+                        if (rentcastData && rentcastData.length > 0) {
+                            console.log('RentCast API successful, using real data');
+                            this.setCachedResult(cacheKey, rentcastData);
+                            return rentcastData;
+                        }
+                    } catch (rentcastError) {
+                        console.log('RentCast API also failed:', rentcastError.message);
+                    }
+                }
+                
+                console.log('All APIs failed, using mock data for demonstration');
                 // Cache mock data to avoid repeated API calls
                 const mockData = this.getMockProperties(params.location, params.limit);
                 this.setCachedResult(cacheKey, mockData);
@@ -700,6 +720,73 @@ class RealEstateAPI {
             const oldestKey = this.cache.keys().next().value;
             this.cache.delete(oldestKey);
         }
+    }
+
+    // RentCast API integration
+    async searchWithRentCast(params) {
+        try {
+            const { location, limit = 50 } = params;
+            
+            // Parse location for RentCast API
+            const searchQuery = this.parseLocation(location);
+            if (!searchQuery) {
+                throw new Error('Could not parse location for RentCast API');
+            }
+
+            // RentCast API endpoint for property listings
+            const response = await axios.get(`${this.rentcastBaseURL}/listings/sale`, {
+                params: {
+                    city: searchQuery.city,
+                    state: searchQuery.state_code,
+                    limit: Math.min(limit, 50) // RentCast free tier limit
+                },
+                headers: {
+                    'X-Api-Key': this.rentcastApiKey,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            // Format RentCast data to match our expected format
+            return this.formatRentCastProperties(response.data || []);
+            
+        } catch (error) {
+            console.error('RentCast API Error:', error.message);
+            throw error;
+        }
+    }
+
+    formatRentCastProperties(properties) {
+        return properties.map(property => ({
+            property_id: property.id || `rentcast-${Math.random()}`,
+            listing_id: property.listingId || property.id,
+            location: {
+                address: {
+                    line: property.address || 'Address not available',
+                    city: property.city || 'Unknown',
+                    state_code: property.state || 'Unknown',
+                    postal_code: property.zipCode || '00000',
+                    coordinate: {
+                        lat: property.latitude || 0,
+                        lon: property.longitude || 0
+                    }
+                }
+            },
+            list_price: property.price || 0,
+            description: {
+                beds: property.bedrooms || 0,
+                baths_consolidated: property.bathrooms?.toString() || '0',
+                sqft: property.squareFootage || 0,
+                lot_sqft: property.lotSize || 0,
+                type: property.propertyType || 'single_family',
+                year_built: property.yearBuilt || 0,
+                name: property.description || 'Property description not available'
+            },
+            status: 'for_sale',
+            list_date: property.listedDate || new Date().toISOString(),
+            photos: property.photos || ['https://via.placeholder.com/400x300?text=Property'],
+            branding: [{ name: 'RentCast', type: 'API' }],
+            permalink: property.url || '#'
+        }));
     }
 }
 
