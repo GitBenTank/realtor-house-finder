@@ -314,8 +314,19 @@ class RealtorHouseFinder {
             const timestamp = new Date().toISOString().split('T')[0];
             const filename = `realtor_listings_${timestamp}.xlsx`;
 
-            // Download the file
-            XLSX.writeFile(workbook, filename);
+            // Download the file with explicit trigger
+            const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
             
             this.showSuccess(`Excel file downloaded successfully! ${this.properties.length} properties exported.`);
         } catch (error) {
