@@ -18,6 +18,10 @@ class RealEstateAPI {
             console.warn('RAPIDAPI_KEY not found, will use mock data');
             this.apiKey = 'mock';
         }
+        
+        // Simple in-memory cache to reduce API calls
+        this.cache = new Map();
+        this.cacheExpiry = 30 * 60 * 1000; // 30 minutes
     }
 
     async searchProperties(params) {
@@ -38,6 +42,14 @@ class RealEstateAPI {
                 host: this.host,
                 location: params.location
             });
+
+            // Check cache first
+            const cacheKey = this.generateCacheKey(params);
+            const cachedResult = this.getCachedResult(cacheKey);
+            if (cachedResult) {
+                console.log('Using cached result for:', cacheKey);
+                return cachedResult;
+            }
 
             // If API key is mock or quota is likely exceeded, use mock data
             if (this.apiKey === 'mock') {
@@ -79,7 +91,12 @@ class RealEstateAPI {
             const properties = this.formatProperties(response.data.data?.home_search?.properties || []);
             
             // Apply client-side filtering since the API doesn't support these filters
-            return this.applyFilters(properties, { minPrice, maxPrice, bedrooms, bathrooms });
+            const filteredProperties = this.applyFilters(properties, { minPrice, maxPrice, bedrooms, bathrooms, propertyType, dateRange });
+            
+            // Cache the result
+            this.setCachedResult(cacheKey, filteredProperties);
+            
+            return filteredProperties;
         } catch (error) {
             console.error('Real Estate API Error:', {
                 message: error.message,
@@ -93,7 +110,10 @@ class RealEstateAPI {
                 (error.response?.data && error.response.data.message && 
                  error.response.data.message.includes('quota'))) {
                 console.log('API quota exceeded, using mock data for demonstration');
-                return this.getMockProperties(params.location, params.limit);
+                // Cache mock data to avoid repeated API calls
+                const mockData = this.getMockProperties(params.location, params.limit);
+                this.setCachedResult(cacheKey, mockData);
+                return mockData;
             } else {
                 console.log('API failed, throwing error instead of using mock data');
                 throw error; // Re-throw the error instead of returning mock data
@@ -650,6 +670,36 @@ class RealEstateAPI {
             
             return true;
         });
+    }
+
+    // Cache management methods
+    generateCacheKey(params) {
+        const { location, propertyType, minPrice, maxPrice, bedrooms, bathrooms, limit, dateRange } = params;
+        return `${location}-${propertyType}-${minPrice}-${maxPrice}-${bedrooms}-${bathrooms}-${limit}-${dateRange}`;
+    }
+
+    getCachedResult(cacheKey) {
+        const cached = this.cache.get(cacheKey);
+        if (cached && (Date.now() - cached.timestamp) < this.cacheExpiry) {
+            return cached.data;
+        }
+        if (cached) {
+            this.cache.delete(cacheKey); // Remove expired cache
+        }
+        return null;
+    }
+
+    setCachedResult(cacheKey, data) {
+        this.cache.set(cacheKey, {
+            data: data,
+            timestamp: Date.now()
+        });
+        
+        // Clean up old cache entries (keep only last 100)
+        if (this.cache.size > 100) {
+            const oldestKey = this.cache.keys().next().value;
+            this.cache.delete(oldestKey);
+        }
     }
 }
 
