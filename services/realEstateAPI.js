@@ -75,6 +75,7 @@ class RealEstateAPI {
                 sort: {
                     direction: "desc",
                     field: "list_date"
+                }
             };
 
             // Add location parameters based on what we parsed
