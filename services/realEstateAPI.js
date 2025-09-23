@@ -88,6 +88,8 @@ class RealEstateAPI {
                 payload.city = searchQuery.city;
             }
 
+            console.log('Making API call with payload:', JSON.stringify(payload, null, 2));
+            
             const response = await axios.post(`${this.baseURL}/properties/v3/list`, payload, {
                 headers: {
                     'X-RapidAPI-Key': this.apiKey,
@@ -96,7 +98,15 @@ class RealEstateAPI {
                 }
             });
 
-            const properties = this.formatProperties(response.data?.data?.home_search?.results || response.data?.data?.home_search?.properties || response.data?.properties || []);
+            console.log('API Response status:', response.status);
+            console.log('API Response data structure:', {
+                hasData: !!response.data,
+                hasHomeSearch: !!response.data?.home_search,
+                hasResults: !!response.data?.home_search?.results,
+                resultsLength: response.data?.home_search?.results?.length || 0
+            });
+
+            const properties = this.formatProperties(response.data?.home_search?.results || response.data?.data?.home_search?.results || response.data?.properties || []);
             
             // Apply client-side filtering since the API doesn't support these filters
             const filteredProperties = this.applyFilters(properties, { minPrice, maxPrice, bedrooms, bathrooms, propertyType, dateRange: params.dateRange });
