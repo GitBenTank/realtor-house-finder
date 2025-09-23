@@ -105,6 +105,7 @@ class RealEstateAPI {
                 hasResults: !!response.data?.home_search?.results,
                 resultsLength: response.data?.home_search?.results?.length || 0
             });
+            console.log('Full API Response:', JSON.stringify(response.data, null, 2));
 
             const properties = this.formatProperties(response.data?.home_search?.results || response.data?.data?.home_search?.results || response.data?.properties || []);
             
