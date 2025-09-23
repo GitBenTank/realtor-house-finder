@@ -4,6 +4,7 @@ class RealtorHouseFinder {
         this.currentPage = 1;
         this.propertiesPerPage = 12; // Show 12 properties per page
         this.totalPages = 1;
+        this.selectedIndex = -1; // For location autocomplete
         this.init();
     }
 
@@ -817,7 +818,7 @@ class RealtorHouseFinder {
     setupLocationAutocomplete(input) {
         const suggestionsContainer = document.getElementById('locationSuggestions');
         let currentSuggestions = [];
-        let selectedIndex = -1;
+        this.selectedIndex = -1;
 
         // Comprehensive list of US cities and states
         const locations = [
@@ -894,18 +895,18 @@ class RealtorHouseFinder {
                 switch (e.key) {
                     case 'ArrowDown':
                         e.preventDefault();
-                        selectedIndex = Math.min(selectedIndex + 1, currentSuggestions.length - 1);
+                        this.selectedIndex = Math.min(this.selectedIndex + 1, currentSuggestions.length - 1);
                         this.updateSelection();
                         break;
                     case 'ArrowUp':
                         e.preventDefault();
-                        selectedIndex = Math.max(selectedIndex - 1, -1);
+                        this.selectedIndex = Math.max(this.selectedIndex - 1, -1);
                         this.updateSelection();
                         break;
                     case 'Enter':
                         e.preventDefault();
-                        if (selectedIndex >= 0 && currentSuggestions[selectedIndex]) {
-                            input.value = currentSuggestions[selectedIndex];
+                        if (this.selectedIndex >= 0 && currentSuggestions[this.selectedIndex]) {
+                            input.value = currentSuggestions[this.selectedIndex];
                             this.hideSuggestions();
                         }
                         break;
@@ -957,7 +958,7 @@ class RealtorHouseFinder {
         const items = suggestionsContainer.querySelectorAll('.suggestion-item');
         
         items.forEach((item, index) => {
-            if (index === selectedIndex) {
+            if (index === this.selectedIndex) {
                 item.style.backgroundColor = 'rgba(99, 102, 241, 0.2)';
             } else {
                 item.style.backgroundColor = 'transparent';
@@ -968,7 +969,7 @@ class RealtorHouseFinder {
     hideSuggestions() {
         const suggestionsContainer = document.getElementById('locationSuggestions');
         suggestionsContainer.classList.add('hidden');
-        selectedIndex = -1;
+        this.selectedIndex = -1;
     }
 }
 
