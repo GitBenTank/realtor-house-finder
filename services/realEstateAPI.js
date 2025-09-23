@@ -147,32 +147,35 @@ class RealEstateAPI {
 
     formatProperties(properties) {
         return properties.map(property => ({
-            id: property.property_id || property.listing_id || property.id,
-            address: this.formatAddress(property),
-            price: this.formatPrice(property.list_price || property.price),
-            bedrooms: property.description?.beds || property.beds || 0,
-            bathrooms: this.parseBathrooms(property.description?.baths_consolidated || property.baths),
-            squareFeet: property.description?.sqft || property.sqft || 0,
-            lotSize: property.description?.lot_sqft || property.lot_sqft || 0,
-            propertyType: property.description?.type || property.property_type || 'Unknown',
-            status: property.status || 'For Sale',
-            listDate: property.list_date || new Date().toISOString(),
-            description: property.description?.name || property.name || '',
-            yearBuilt: property.year_built || 'Unknown',
-            garage: property.garage || 0,
-            pool: property.pool || false,
-            images: property.photos?.map(photo => photo.href) || property.images || [],
-            agent: {
-                name: property.branding?.[0]?.name || property.advertisers?.[0]?.name || 'Unknown',
-                phone: property.agent?.phone || '',
-                email: property.agent?.email || ''
+            property_id: property.property_id || property.id,
+            listing_id: property.listing_id || property.id,
+            location: {
+                address: {
+                    line: property.location?.address?.line || property.address || 'Address not available',
+                    city: property.location?.address?.city || property.address?.split(',')[1]?.trim() || 'Unknown',
+                    state_code: property.location?.address?.state_code || property.address?.split(',')[2]?.trim() || 'Unknown',
+                    postal_code: property.location?.address?.postal_code || property.address?.split(',')[3]?.trim() || '00000',
+                    coordinate: {
+                        lat: property.location?.address?.coordinate?.lat || property.coordinates?.lat || 0,
+                        lon: property.location?.address?.coordinate?.lon || property.coordinates?.lng || 0
+                    }
+                }
             },
-            coordinates: {
-                lat: property.location?.address?.coordinate?.lat || property.lat || 0,
-                lng: property.location?.address?.coordinate?.lon || property.lng || 0
+            list_price: property.list_price || property.price || 0,
+            description: {
+                beds: property.description?.beds || property.bedrooms || 0,
+                baths_consolidated: property.description?.baths_consolidated || property.bathrooms?.toString() || '0',
+                sqft: property.description?.sqft || property.squareFeet || 0,
+                lot_sqft: property.description?.lot_sqft || property.lotSize || 0,
+                type: property.description?.type || property.propertyType || 'single_family',
+                year_built: property.description?.year_built || property.yearBuilt || 0,
+                name: property.description?.name || property.description || 'Property description not available'
             },
-            url: `https://www.realtor.com/realestateandhomes-detail/${property.permalink || property.id}`,
-            lastUpdated: new Date().toISOString()
+            status: property.status || 'for_sale',
+            list_date: property.list_date || property.listDate || new Date().toISOString(),
+            photos: property.photos || property.images || ['https://via.placeholder.com/400x300?text=Property'],
+            branding: property.branding || [{ name: property.agent?.name || 'Unknown', type: 'Office' }],
+            permalink: property.permalink || property.url || '#'
         }));
     }
 
