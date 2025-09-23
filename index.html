@@ -313,16 +313,69 @@
             border: 2px solid var(--border-color);
             color: var(--text-primary);
             transition: all 0.3s ease;
+            z-index: 10;
+            position: relative;
         }
         
         .input-dark:focus {
             border-color: var(--accent-primary);
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
             background: var(--bg-secondary);
+            z-index: 20;
         }
         
         .input-dark::placeholder {
             color: var(--text-muted);
+        }
+        
+        /* Dropdown styling fixes */
+        select.input-dark {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            z-index: 10;
+            position: relative;
+        }
+        
+        select.input-dark:focus {
+            background: var(--bg-secondary);
+            z-index: 20;
+        }
+        
+        select.input-dark option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 8px 12px;
+        }
+        
+        /* Location suggestions dropdown */
+        #locationSuggestions {
+            background: var(--bg-secondary) !important;
+            border: 1px solid var(--border-color) !important;
+            z-index: 50 !important;
+            position: absolute !important;
+            top: 100% !important;
+            left: 0 !important;
+            right: 0 !important;
+            max-height: 200px !important;
+            overflow-y: auto !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        #locationSuggestions .suggestion-item {
+            padding: 12px 16px;
+            color: var(--text-primary);
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+        
+        #locationSuggestions .suggestion-item:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        #locationSuggestions .suggestion-item:last-child {
+            border-bottom: none;
         }
         
         /* Mobile optimizations - Dark Theme with Enhanced Touch */

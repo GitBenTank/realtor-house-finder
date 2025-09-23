@@ -10,13 +10,16 @@ class RealEstateAPI {
         this.rentcastApiKey = process.env.RENTCAST_API_KEY;
         this.rentcastBaseURL = 'https://api.rentcast.io/v1';
         
-        console.log('RealEstateAPI Constructor Debug:', {
-            apiKey: this.apiKey ? 'present' : 'missing',
-            host: this.host,
-            baseURL: this.baseURL,
-            envRapidAPIKey: process.env.RAPIDAPI_KEY ? 'present' : 'missing',
-            envRapidAPIHost: process.env.RAPIDAPI_HOST ? 'present' : 'missing'
-        });
+        // Only log debug info in development
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('RealEstateAPI Constructor Debug:', {
+                apiKey: this.apiKey ? 'present' : 'missing',
+                host: this.host,
+                baseURL: this.baseURL,
+                envRapidAPIKey: process.env.RAPIDAPI_KEY ? 'present' : 'missing',
+                envRapidAPIHost: process.env.RAPIDAPI_HOST ? 'present' : 'missing'
+            });
+        }
         
         if (!this.apiKey) {
             console.warn('RAPIDAPI_KEY not found, will use mock data');
@@ -41,11 +44,14 @@ class RealEstateAPI {
                 offset = 0
             } = params;
 
-            console.log('API Service Debug:', {
-                apiKey: this.apiKey ? 'present' : 'missing',
-                host: this.host,
-                location: params.location
-            });
+            // Only log debug info in development
+            if (process.env.NODE_ENV !== 'production') {
+                console.log('API Service Debug:', {
+                    apiKey: this.apiKey ? 'present' : 'missing',
+                    host: this.host,
+                    location: params.location
+                });
+            }
 
             // Check cache first
             const cacheKey = this.generateCacheKey(params);
@@ -78,7 +84,7 @@ class RealEstateAPI {
                 }
             };
 
-            // Add location parameters based on what we parsed
+            // Add location parameters directly to payload (not in query object)
             if (searchQuery.postal_code) {
                 payload.postal_code = searchQuery.postal_code;
             } else if (searchQuery.city && searchQuery.state_code) {
@@ -88,7 +94,10 @@ class RealEstateAPI {
                 payload.city = searchQuery.city;
             }
 
-            console.log('Making API call with payload:', JSON.stringify(payload, null, 2));
+            // Only log debug info in development
+            if (process.env.NODE_ENV !== 'production') {
+                console.log('Making API call with payload:', JSON.stringify(payload, null, 2));
+            }
             
             const response = await axios.post(`${this.baseURL}/properties/v3/list`, payload, {
                 headers: {
@@ -98,14 +107,17 @@ class RealEstateAPI {
                 }
             });
 
-            console.log('API Response status:', response.status);
-            console.log('API Response data structure:', {
-                hasData: !!response.data,
-                hasHomeSearch: !!response.data?.home_search,
-                hasResults: !!response.data?.home_search?.results,
-                resultsLength: response.data?.home_search?.results?.length || 0
-            });
-            console.log('Full API Response:', JSON.stringify(response.data, null, 2));
+            // Only log debug info in development
+            if (process.env.NODE_ENV !== 'production') {
+                console.log('API Response status:', response.status);
+                console.log('API Response data structure:', {
+                    hasData: !!response.data,
+                    hasHomeSearch: !!response.data?.home_search,
+                    hasResults: !!response.data?.home_search?.results,
+                    resultsLength: response.data?.home_search?.results?.length || 0
+                });
+                console.log('Full API Response:', JSON.stringify(response.data, null, 2));
+            }
 
             const properties = this.formatProperties(response.data?.data?.home_search?.results || response.data?.home_search?.results || response.data?.properties || []);
             
@@ -157,37 +169,61 @@ class RealEstateAPI {
     }
 
     formatProperties(properties) {
-        return properties.map(property => ({
-            property_id: property.property_id || property.id,
-            listing_id: property.listing_id || property.id,
-            location: {
-                address: {
-                    line: property.location?.address?.line || property.address || 'Address not available',
-                    city: property.location?.address?.city || property.address?.split(',')[1]?.trim() || 'Unknown',
-                    state_code: property.location?.address?.state_code || property.address?.split(',')[2]?.trim() || 'Unknown',
-                    postal_code: property.location?.address?.postal_code || property.address?.split(',')[3]?.trim() || '00000',
-                    coordinate: {
-                        lat: property.location?.address?.coordinate?.lat || property.coordinates?.lat || 0,
-                        lon: property.location?.address?.coordinate?.lon || property.coordinates?.lng || 0
-                    }
-                }
-            },
-            list_price: property.list_price || property.price || 0,
-            description: {
-                beds: property.description?.beds || property.bedrooms || 0,
-                baths_consolidated: property.description?.baths_consolidated || property.bathrooms?.toString() || '0',
-                sqft: property.description?.sqft || property.squareFeet || 0,
-                lot_sqft: property.description?.lot_sqft || property.lotSize || 0,
-                type: property.description?.type || property.propertyType || 'single_family',
-                year_built: property.description?.year_built || property.yearBuilt || 0,
-                name: property.description?.name || property.description || 'Property description not available'
-            },
-            status: property.status || 'for_sale',
-            list_date: property.list_date || property.listDate || new Date().toISOString(),
-            photos: property.photos || property.images || ['https://via.placeholder.com/400x300?text=Property'],
-            branding: property.branding || [{ name: property.agent?.name || 'Unknown', type: 'Office' }],
-            permalink: property.permalink || property.url || '#'
-        }));
+        return properties.map(property => {
+            // Extract address information
+            const address = property.location?.address;
+            const addressLine = address?.line || 'Address not available';
+            const city = address?.city || 'Unknown';
+            const stateCode = address?.state_code || 'Unknown';
+            const postalCode = address?.postal_code || '00000';
+            const coordinates = address?.coordinate || { lat: 0, lon: 0 };
+            
+            // Extract description information
+            const description = property.description || {};
+            const beds = description.beds || 0;
+            const baths = description.baths || 0;
+            const sqft = description.sqft || 0;
+            const lotSqft = description.lot_sqft || 0;
+            const propertyType = description.type || 'single_family';
+            const yearBuilt = description.year_built || 0;
+            
+            // Extract branding information
+            const branding = property.branding || [];
+            const agentName = branding.length > 0 ? branding[0].name : 'Unknown Agent';
+            
+            return {
+                id: property.property_id || property.id || `prop-${Math.random()}`,
+                property_id: property.property_id || property.id,
+                listing_id: property.listing_id || property.id,
+                address: addressLine,
+                city: city,
+                state: stateCode,
+                postal_code: postalCode,
+                coordinates: {
+                    lat: coordinates.lat || 0,
+                    lng: coordinates.lon || 0
+                },
+                price: property.list_price || property.price || 0,
+                bedrooms: beds,
+                bathrooms: baths,
+                squareFeet: sqft,
+                lotSize: lotSqft,
+                propertyType: propertyType,
+                yearBuilt: yearBuilt,
+                status: property.status || 'for_sale',
+                listDate: property.list_date || property.listDate || new Date().toISOString(),
+                images: property.photos || property.images || (property.primary_photo?.href ? [property.primary_photo.href] : ['https://via.placeholder.com/400x300?text=Property']),
+                primary_photo: property.primary_photo,
+                agent: {
+                    name: agentName,
+                    phone: property.agent?.phone || 'N/A',
+                    email: property.agent?.email || 'N/A'
+                },
+                url: property.href || property.permalink || property.url || '#',
+                priceReducedAmount: property.price_reduced_amount || 0,
+                lastUpdated: new Date().toISOString()
+            };
+        });
     }
 
     formatAddress(property) {
@@ -686,9 +722,10 @@ class RealEstateAPI {
             if (propertyType && propertyType !== 'any') {
                 // Map frontend property types to API property types
                 const typeMapping = {
-                    'house': ['single_family', 'townhomes', 'condo'],
-                    'condo': ['condo', 'townhomes'],
+                    'house': ['single_family', 'townhomes', 'condo', 'coop', 'apartment'],
+                    'condo': ['condo', 'townhomes', 'coop'],
                     'townhouse': ['townhomes'],
+                    'apartment': ['apartment', 'condo', 'coop'],
                     'single_family': ['single_family']
                 };
                 

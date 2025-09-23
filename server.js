@@ -133,19 +133,17 @@ app.get('/api/debug', async (req, res) => {
         
         // Try to make the actual API call
         const payload = {
-            query: {
-                status: ["for_sale"],
-                postal_code: "10022"
-            },
+            postal_code: "10022",
             limit: 1,
             offset: 0,
+            status: ["for_sale"],
             sort: {
                 direction: "desc",
                 field: "list_date"
             }
         };
         
-        const response = await require('axios').post(`${realEstateAPI.baseURL}/property_list/`, payload, {
+        const response = await require('axios').post(`${realEstateAPI.baseURL}/properties/v3/list`, payload, {
             headers: {
                 'X-RapidAPI-Key': realEstateAPI.apiKey,
                 'X-RapidAPI-Host': realEstateAPI.host,

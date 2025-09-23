@@ -244,15 +244,20 @@ class RealtorHouseFinder {
         const isNewListing = daysOnMarket <= 7;
         const isPriceReduced = property.priceReducedAmount && property.priceReducedAmount > 0;
 
+        // Get the primary photo URL from the property data
+        const primaryPhoto = property.primary_photo?.href || property.images?.[0];
+        const hasValidImage = primaryPhoto && !primaryPhoto.includes('placeholder') && !primaryPhoto.includes('via.placeholder');
+        
         card.innerHTML = `
             <!-- Property Image -->
             <div class="relative mb-6 rounded-xl overflow-hidden">
-                ${property.images && property.images.length > 0 ? 
-                    `<img src="${property.images[0]}" alt="${property.address}" class="w-full h-48 object-cover transition-transform duration-300 hover:scale-105">` :
-                    `<div class="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                        <i class="fas fa-home text-4xl text-gray-400"></i>
-                    </div>`
+                ${hasValidImage ? 
+                    `<img src="${primaryPhoto}" alt="${property.address}" class="w-full h-48 object-cover transition-transform duration-300 hover:scale-105" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` :
+                    ``
                 }
+                <div class="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center" style="display: ${hasValidImage ? 'none' : 'flex'};">
+                    <i class="fas fa-home text-4xl text-gray-400"></i>
+                </div>
                 <div class="absolute top-4 left-4 flex flex-col space-y-2">
                     ${isNewListing ? '<span class="status-badge bg-gradient-to-r from-green-500 to-emerald-500">New Listing</span>' : ''}
                     ${isPriceReduced ? '<span class="status-badge bg-gradient-to-r from-red-500 to-pink-500">Price Reduced</span>' : ''}
