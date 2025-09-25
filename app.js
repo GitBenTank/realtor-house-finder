@@ -381,22 +381,29 @@ class RealtorHouseFinder {
                 })
             });
 
-            const data = await response.json();
+            if (response.ok) {
+                // Get the filename from the Content-Disposition header
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const filename = contentDisposition 
+                    ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+                    : `realtor_listings_${new Date().toISOString().split('T')[0]}.xlsx`;
 
-            if (data.success) {
-                // Download the file from server
-                const filename = data.filePath.split('/').pop();
+                // Create blob and download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                link.href = `/api/download/${filename}`;
+                link.href = url;
                 link.download = filename;
                 link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
                 
                 this.showSuccess(`Excel file downloaded successfully! ${this.properties.length} properties exported.`);
             } else {
-                throw new Error(data.error || 'Export failed');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Export failed');
             }
         } catch (error) {
             console.error('Export error:', error);
@@ -835,22 +842,29 @@ class RealtorHouseFinder {
                 })
             });
 
-            const data = await response.json();
+            if (response.ok) {
+                // Get the filename from the Content-Disposition header
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const filename = contentDisposition 
+                    ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+                    : `market_analysis_${new Date().toISOString().split('T')[0]}.xlsx`;
 
-            if (data.success) {
-                // Download the file from server
-                const filename = data.filePath.split('/').pop();
+                // Create blob and download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                link.href = `/api/download/${filename}`;
+                link.href = url;
                 link.download = filename;
                 link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
                 
                 this.showSuccess(`Market analysis report downloaded successfully! ${this.properties.length} properties analyzed.`);
             } else {
-                throw new Error(data.error || 'Market report creation failed');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Market report creation failed');
             }
         } catch (error) {
             console.error('Market report error:', error);

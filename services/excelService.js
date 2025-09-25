@@ -49,6 +49,37 @@ class ExcelService {
         }
     }
 
+    async exportToExcelBuffer(properties, customFilename = null) {
+        try {
+            // Prepare data for Excel
+            const excelData = this.prepareExcelData(properties);
+            
+            // Create workbook
+            const workbook = XLSX.utils.book_new();
+            
+            // Add main properties sheet
+            const propertiesSheet = XLSX.utils.json_to_sheet(excelData.properties);
+            XLSX.utils.book_append_sheet(workbook, propertiesSheet, 'Properties');
+            
+            // Add summary sheet
+            const summarySheet = XLSX.utils.json_to_sheet(excelData.summary);
+            XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+            
+            // Add market analysis sheet
+            const analysisSheet = XLSX.utils.json_to_sheet(excelData.analysis);
+            XLSX.utils.book_append_sheet(workbook, analysisSheet, 'Market Analysis');
+
+            // Generate buffer
+            const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+            
+            console.log(`✅ Excel buffer created: ${buffer.length} bytes`);
+            return buffer;
+        } catch (error) {
+            console.error('Excel buffer export error:', error);
+            throw new Error(`Failed to create Excel buffer: ${error.message}`);
+        }
+    }
+
     prepareExcelData(properties) {
         const propertiesData = properties.map(property => ({
             'Property ID': property.id,
@@ -237,6 +268,47 @@ class ExcelService {
             return filePath;
         } catch (error) {
             console.error('Market analysis report error:', error);
+            throw error;
+        }
+    }
+
+    async createMarketAnalysisReportBuffer(properties, location = 'Unknown') {
+        try {
+            // Create workbook
+            const workbook = XLSX.utils.book_new();
+            
+            // Add properties sheet
+            const propertiesData = this.prepareExcelData(properties);
+            const propertiesSheet = XLSX.utils.json_to_sheet(propertiesData.properties);
+            XLSX.utils.book_append_sheet(workbook, propertiesSheet, 'Properties');
+            
+            // Add market summary
+            const marketSummary = this.generateMarketSummary(properties, location);
+            const summarySheet = XLSX.utils.json_to_sheet(marketSummary);
+            XLSX.utils.book_append_sheet(workbook, summarySheet, 'Market Summary');
+            
+            // Add price trends
+            const priceTrends = this.generatePriceTrends(properties);
+            const trendsSheet = XLSX.utils.json_to_sheet(priceTrends);
+            XLSX.utils.book_append_sheet(workbook, trendsSheet, 'Price Trends');
+            
+            // Add neighborhood analysis
+            const neighborhoodAnalysis = this.generateNeighborhoodAnalysis(properties);
+            const neighborhoodSheet = XLSX.utils.json_to_sheet(neighborhoodAnalysis);
+            XLSX.utils.book_append_sheet(workbook, neighborhoodSheet, 'Neighborhood Analysis');
+            
+            // Add investment analysis
+            const investmentAnalysis = this.generateInvestmentAnalysis(properties);
+            const investmentSheet = XLSX.utils.json_to_sheet(investmentAnalysis);
+            XLSX.utils.book_append_sheet(workbook, investmentSheet, 'Investment Analysis');
+
+            // Generate buffer
+            const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+            
+            console.log(`📊 Market analysis buffer created: ${buffer.length} bytes`);
+            return buffer;
+        } catch (error) {
+            console.error('Market analysis buffer error:', error);
             throw error;
         }
     }

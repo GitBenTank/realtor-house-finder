@@ -255,8 +255,17 @@ app.post('/api/export', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Properties array is required' });
         }
 
-        const filePath = await excelService.exportToExcel(properties, filename);
-        res.json({ success: true, filePath, message: 'Excel file created successfully' });
+        // Generate Excel file in memory
+        const excelBuffer = await excelService.exportToExcelBuffer(properties, filename);
+        
+        // Set headers for file download
+        const downloadFilename = filename || `realtor_listings_${new Date().toISOString().split('T')[0]}.xlsx`;
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+        res.setHeader('Content-Length', excelBuffer.length);
+        
+        // Send the Excel file directly
+        res.send(excelBuffer);
     } catch (error) {
         console.error('Export error:', error);
         res.status(500).json({ success: false, error: error.message });
@@ -290,8 +299,17 @@ app.post('/api/market-analysis', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Properties array is required' });
         }
 
-        const filePath = await excelService.createMarketAnalysisReport(properties, location || 'Unknown');
-        res.json({ success: true, filePath, message: 'Market analysis report created successfully' });
+        // Generate Excel file in memory
+        const excelBuffer = await excelService.createMarketAnalysisReportBuffer(properties, location || 'Unknown');
+        
+        // Set headers for file download
+        const downloadFilename = `market_analysis_${new Date().toISOString().split('T')[0]}.xlsx`;
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+        res.setHeader('Content-Length', excelBuffer.length);
+        
+        // Send the Excel file directly
+        res.send(excelBuffer);
     } catch (error) {
         console.error('Market analysis error:', error);
         res.status(500).json({ success: false, error: 'Failed to create market analysis report' });
