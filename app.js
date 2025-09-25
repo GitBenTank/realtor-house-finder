@@ -926,8 +926,8 @@ class RealtorHouseFinder {
                 
                 this.showSuccess(`📊 Property Listings Report downloaded! Includes detailed property data, executive summary, and agent contacts for ${this.properties.length} properties.`);
             } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Property Listings report creation failed');
+                const errorText = await response.text();
+                throw new Error(`Property Listings report creation failed: ${response.status} - ${errorText}`);
             }
         } catch (error) {
             console.error('Property Listings report error:', error);
@@ -982,8 +982,8 @@ class RealtorHouseFinder {
                 
                 this.showSuccess(`📈 Market Intelligence Report downloaded! Includes market trends, competitive analysis, neighborhood insights, and strategic recommendations for ${this.properties.length} properties.`);
             } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Market Intelligence report creation failed');
+                const errorText = await response.text();
+                throw new Error(`Market Intelligence report creation failed: ${response.status} - ${errorText}`);
             }
         } catch (error) {
             console.error('Market Intelligence report error:', error);
@@ -1038,8 +1038,8 @@ class RealtorHouseFinder {
                 
                 this.showSuccess(`💰 Investment Analysis Report downloaded! Includes ROI analysis, investment scores, risk assessment, and investment recommendations for ${this.properties.length} properties.`);
             } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Investment Analysis report creation failed');
+                const errorText = await response.text();
+                throw new Error(`Investment Analysis report creation failed: ${response.status} - ${errorText}`);
             }
         } catch (error) {
             console.error('Investment Analysis report error:', error);
