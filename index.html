@@ -638,26 +638,30 @@
                         </h3>
                         <div id="resultsCount" class="text-lg" style="color: var(--text-secondary);"></div>
                     </div>
-                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-                        <button id="exportBtn" 
-                                class="btn-success text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center w-full sm:w-auto shadow-lg">
-                            <i class="fas fa-file-excel mr-2"></i>
-                            Export to Excel
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                        <button id="propertyListingsBtn" 
+                                class="btn-success text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex flex-col items-center justify-center shadow-lg hover:shadow-xl">
+                            <i class="fas fa-robot text-2xl mb-2"></i>
+                            <span class="text-sm font-semibold">AI Property Analysis</span>
+                            <span class="text-xs opacity-90 mt-1">Intelligent market insights</span>
                         </button>
-                        <button id="analyticsBtn" 
-                                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center w-full sm:w-auto shadow-lg hover:from-purple-600 hover:to-pink-600">
-                            <i class="fas fa-chart-line mr-2"></i>
-                            Market Analytics
+                        <button id="marketIntelligenceBtn" 
+                                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex flex-col items-center justify-center shadow-lg hover:shadow-xl hover:from-purple-600 hover:to-pink-600">
+                            <i class="fas fa-brain text-2xl mb-2"></i>
+                            <span class="text-sm font-semibold">AI Market Intelligence</span>
+                            <span class="text-xs opacity-90 mt-1">Smart market predictions</span>
                         </button>
-                        <button id="marketReportBtn" 
-                                class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center w-full sm:w-auto shadow-lg hover:from-indigo-600 hover:to-purple-600">
-                            <i class="fas fa-file-alt mr-2"></i>
-                            Market Report
+                        <button id="investmentAnalysisBtn" 
+                                class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex flex-col items-center justify-center shadow-lg hover:shadow-xl hover:from-indigo-600 hover:to-purple-600">
+                            <i class="fas fa-chart-pie text-2xl mb-2"></i>
+                            <span class="text-sm font-semibold">AI Investment Analysis</span>
+                            <span class="text-xs opacity-90 mt-1">Smart investment recommendations</span>
                         </button>
                         <button id="clearBtn" 
-                                class="btn-danger text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center w-full sm:w-auto shadow-lg">
-                            <i class="fas fa-trash mr-2"></i>
-                            Clear Results
+                                class="btn-danger text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex flex-col items-center justify-center shadow-lg hover:shadow-xl">
+                            <i class="fas fa-trash text-2xl mb-2"></i>
+                            <span class="text-sm font-semibold">Clear Results</span>
+                            <span class="text-xs opacity-90 mt-1">Reset search</span>
                         </button>
                     </div>
                 </div>
@@ -794,6 +798,111 @@
             <div class="flex items-center">
                 <i class="fas fa-check-circle mr-3 text-xl" style="color: #10b981;"></i>
                 <span id="successText" class="font-medium" style="color: var(--text-primary);"></span>
+            </div>
+        </div>
+
+        <!-- Report Types Section -->
+        <div class="mt-12">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 flex items-center justify-center" style="color: var(--text-primary);">
+                    <i class="fas fa-file-excel mr-3" style="color: var(--accent-primary);"></i>
+                    <span class="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                        Three Comprehensive Report Types
+                    </span>
+                </h2>
+                <p class="text-lg" style="color: var(--text-secondary);">Choose the perfect report for your needs</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Property Listings Report -->
+                <div class="rounded-2xl shadow-2xl p-8 card-hover fade-in" style="background: var(--bg-secondary); border: 1px solid var(--border-color);">
+                    <div class="text-center">
+                        <div class="relative mb-6">
+                            <i class="fas fa-list text-5xl float" style="color: #10b981;"></i>
+                            <div class="absolute -top-2 -right-2 w-4 h-4 rounded-full animate-pulse" style="background: #10b981;"></div>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">Property Listings Report</h3>
+                        <p class="text-lg leading-relaxed mb-4" style="color: var(--text-secondary);">Comprehensive property data with executive summary, detailed listings, property analysis, market overview, and agent contacts.</p>
+                        <div class="text-left space-y-2">
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #10b981;"></i>
+                                Executive Summary with market insights
+                            </div>
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #10b981;"></i>
+                                Detailed property information
+                            </div>
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #10b981;"></i>
+                                Agent contact information
+                            </div>
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #10b981;"></i>
+                                Property analysis & notes
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Market Intelligence Report -->
+                <div class="rounded-2xl shadow-2xl p-8 card-hover fade-in-delay-1" style="background: var(--bg-secondary); border: 1px solid var(--border-color);">
+                    <div class="text-center">
+                        <div class="relative mb-6">
+                            <i class="fas fa-chart-line text-5xl float" style="color: #8b5cf6;"></i>
+                            <div class="absolute -top-2 -right-2 w-4 h-4 rounded-full animate-pulse" style="background: #8b5cf6;"></div>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Market Intelligence Report</h3>
+                        <p class="text-lg leading-relaxed mb-4" style="color: var(--text-secondary);">Advanced market analysis with trends, competitive insights, neighborhood comparisons, and strategic recommendations.</p>
+                        <div class="text-left space-y-2">
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #8b5cf6;"></i>
+                                Market trends & velocity analysis
+                            </div>
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #8b5cf6;"></i>
+                                Competitive analysis
+                            </div>
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #8b5cf6;"></i>
+                                Neighborhood comparisons
+                            </div>
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #8b5cf6;"></i>
+                                Strategic recommendations
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Investment Analysis Report -->
+                <div class="rounded-2xl shadow-2xl p-8 card-hover fade-in-delay-2" style="background: var(--bg-secondary); border: 1px solid var(--border-color);">
+                    <div class="text-center">
+                        <div class="relative mb-6">
+                            <i class="fas fa-dollar-sign text-5xl float" style="color: #6366f1;"></i>
+                            <div class="absolute -top-2 -right-2 w-4 h-4 rounded-full animate-pulse" style="background: #6366f1;"></div>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">Investment Analysis Report</h3>
+                        <p class="text-lg leading-relaxed mb-4" style="color: var(--text-secondary);">Professional investment evaluation with ROI analysis, investment scores, risk assessment, and investment recommendations.</p>
+                        <div class="text-left space-y-2">
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #6366f1;"></i>
+                                Investment scores & ratings
+                            </div>
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #6366f1;"></i>
+                                ROI analysis by price range
+                            </div>
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #6366f1;"></i>
+                                Risk assessment
+                            </div>
+                            <div class="flex items-center text-sm" style="color: var(--text-primary);">
+                                <i class="fas fa-check-circle mr-2" style="color: #6366f1;"></i>
+                                Investment recommendations
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

@@ -5,6 +5,7 @@ const path = require('path');
 
 const RealEstateAPI = require('./services/realEstateAPI');
 const excelService = require('./services/excelService');
+const aiReportService = require('./services/aiReportService');
 const cronService = require('./services/cronService');
 
 // Simple analytics tracking
@@ -313,6 +314,90 @@ app.post('/api/market-analysis', async (req, res) => {
     } catch (error) {
         console.error('Market analysis error:', error);
         res.status(500).json({ success: false, error: 'Failed to create market analysis report' });
+    }
+});
+
+// Report Type 1: Property Listings Report
+app.post('/api/reports/property-listings', async (req, res) => {
+    try {
+        const { properties, location } = req.body;
+        
+        if (!properties || !Array.isArray(properties)) {
+            return res.status(400).json({ success: false, error: 'Properties array is required' });
+        }
+
+        console.log(`🤖 Generating AI Property Listings Report for ${properties.length} properties in ${location || 'Unknown'}`);
+        
+        // Generate AI-powered property listings report
+        const excelBuffer = await aiReportService.generatePropertyListingsReport(properties, location || 'Unknown');
+        
+        // Set headers for file download
+        const downloadFilename = `AI_Property_Analysis_${(location || 'Unknown').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+        res.setHeader('Content-Length', excelBuffer.length);
+        
+        // Send the Excel file directly
+        res.send(excelBuffer);
+    } catch (error) {
+        console.error('Property Listings Report error:', error);
+        res.status(500).json({ success: false, error: 'Failed to create Property Listings report' });
+    }
+});
+
+// Report Type 2: Market Intelligence Report
+app.post('/api/reports/market-intelligence', async (req, res) => {
+    try {
+        const { properties, location } = req.body;
+        
+        if (!properties || !Array.isArray(properties)) {
+            return res.status(400).json({ success: false, error: 'Properties array is required' });
+        }
+
+        console.log(`🤖 Generating AI Market Intelligence Report for ${properties.length} properties in ${location || 'Unknown'}`);
+        
+        // Generate AI-powered market intelligence report
+        const excelBuffer = await aiReportService.generateMarketIntelligenceReport(properties, location || 'Unknown');
+        
+        // Set headers for file download
+        const downloadFilename = `AI_Market_Intelligence_${(location || 'Unknown').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+        res.setHeader('Content-Length', excelBuffer.length);
+        
+        // Send the Excel file directly
+        res.send(excelBuffer);
+    } catch (error) {
+        console.error('Market Intelligence Report error:', error);
+        res.status(500).json({ success: false, error: 'Failed to create Market Intelligence report' });
+    }
+});
+
+// Report Type 3: Investment Analysis Report
+app.post('/api/reports/investment-analysis', async (req, res) => {
+    try {
+        const { properties, location } = req.body;
+        
+        if (!properties || !Array.isArray(properties)) {
+            return res.status(400).json({ success: false, error: 'Properties array is required' });
+        }
+
+        console.log(`🤖 Generating AI Investment Analysis Report for ${properties.length} properties in ${location || 'Unknown'}`);
+        
+        // Generate AI-powered investment analysis report
+        const excelBuffer = await aiReportService.generateInvestmentAnalysisReport(properties, location || 'Unknown');
+        
+        // Set headers for file download
+        const downloadFilename = `AI_Investment_Analysis_${(location || 'Unknown').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+        res.setHeader('Content-Length', excelBuffer.length);
+        
+        // Send the Excel file directly
+        res.send(excelBuffer);
+    } catch (error) {
+        console.error('Investment Analysis Report error:', error);
+        res.status(500).json({ success: false, error: 'Failed to create Investment Analysis report' });
     }
 });
 

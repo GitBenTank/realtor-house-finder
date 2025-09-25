@@ -17,14 +17,18 @@ class RealtorHouseFinder {
         console.log('Binding events...');
         
         const searchForm = document.getElementById('searchForm');
-        const exportBtn = document.getElementById('exportBtn');
+        const propertyListingsBtn = document.getElementById('propertyListingsBtn');
+        const marketIntelligenceBtn = document.getElementById('marketIntelligenceBtn');
+        const investmentAnalysisBtn = document.getElementById('investmentAnalysisBtn');
         const clearBtn = document.getElementById('clearBtn');
         const testBtn = document.getElementById('testBtn');
         const searchBtn = document.getElementById('searchBtn');
 
         console.log('Elements found:', {
             searchForm: !!searchForm,
-            exportBtn: !!exportBtn,
+            propertyListingsBtn: !!propertyListingsBtn,
+            marketIntelligenceBtn: !!marketIntelligenceBtn,
+            investmentAnalysisBtn: !!investmentAnalysisBtn,
             clearBtn: !!clearBtn,
             testBtn: !!testBtn,
             searchBtn: !!searchBtn
@@ -46,7 +50,10 @@ class RealtorHouseFinder {
             });
         }
         
-        if (exportBtn) exportBtn.addEventListener('click', () => this.handleExport());
+        // Report button handlers
+        if (propertyListingsBtn) propertyListingsBtn.addEventListener('click', () => this.createPropertyListingsReport());
+        if (marketIntelligenceBtn) marketIntelligenceBtn.addEventListener('click', () => this.createMarketIntelligenceReport());
+        if (investmentAnalysisBtn) investmentAnalysisBtn.addEventListener('click', () => this.createInvestmentAnalysisReport());
         if (clearBtn) clearBtn.addEventListener('click', () => this.handleClear());
         if (testBtn) testBtn.addEventListener('click', () => this.handleTestSearch());
         
@@ -869,6 +876,174 @@ class RealtorHouseFinder {
         } catch (error) {
             console.error('Market report error:', error);
             this.showError('Market report creation failed: ' + error.message);
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    // Report Type 1: Property Listings Report
+    async createPropertyListingsReport() {
+        if (this.properties.length === 0) {
+            this.showError('No properties to analyze. Please search for properties first.');
+            return;
+        }
+
+        this.showLoading(true);
+        this.hideMessages();
+
+        try {
+            const location = document.getElementById('location')?.value || 'Unknown';
+            
+            const response = await fetch('/api/reports/property-listings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    properties: this.properties,
+                    location: location
+                })
+            });
+
+            if (response.ok) {
+                // Get the filename from the Content-Disposition header
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const filename = contentDisposition 
+                    ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+                    : `property_listings_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+                // Create blob and download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                this.showSuccess(`📊 Property Listings Report downloaded! Includes detailed property data, executive summary, and agent contacts for ${this.properties.length} properties.`);
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Property Listings report creation failed');
+            }
+        } catch (error) {
+            console.error('Property Listings report error:', error);
+            this.showError('Property Listings report creation failed: ' + error.message);
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    // Report Type 2: Market Intelligence Report
+    async createMarketIntelligenceReport() {
+        if (this.properties.length === 0) {
+            this.showError('No properties to analyze. Please search for properties first.');
+            return;
+        }
+
+        this.showLoading(true);
+        this.hideMessages();
+
+        try {
+            const location = document.getElementById('location')?.value || 'Unknown';
+            
+            const response = await fetch('/api/reports/market-intelligence', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    properties: this.properties,
+                    location: location
+                })
+            });
+
+            if (response.ok) {
+                // Get the filename from the Content-Disposition header
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const filename = contentDisposition 
+                    ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+                    : `market_intelligence_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+                // Create blob and download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                this.showSuccess(`📈 Market Intelligence Report downloaded! Includes market trends, competitive analysis, neighborhood insights, and strategic recommendations for ${this.properties.length} properties.`);
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Market Intelligence report creation failed');
+            }
+        } catch (error) {
+            console.error('Market Intelligence report error:', error);
+            this.showError('Market Intelligence report creation failed: ' + error.message);
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    // Report Type 3: Investment Analysis Report
+    async createInvestmentAnalysisReport() {
+        if (this.properties.length === 0) {
+            this.showError('No properties to analyze. Please search for properties first.');
+            return;
+        }
+
+        this.showLoading(true);
+        this.hideMessages();
+
+        try {
+            const location = document.getElementById('location')?.value || 'Unknown';
+            
+            const response = await fetch('/api/reports/investment-analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    properties: this.properties,
+                    location: location
+                })
+            });
+
+            if (response.ok) {
+                // Get the filename from the Content-Disposition header
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const filename = contentDisposition 
+                    ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+                    : `investment_analysis_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+                // Create blob and download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                this.showSuccess(`💰 Investment Analysis Report downloaded! Includes ROI analysis, investment scores, risk assessment, and investment recommendations for ${this.properties.length} properties.`);
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Investment Analysis report creation failed');
+            }
+        } catch (error) {
+            console.error('Investment Analysis report error:', error);
+            this.showError('Investment Analysis report creation failed: ' + error.message);
         } finally {
             this.showLoading(false);
         }
