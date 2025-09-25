@@ -17,6 +17,7 @@ class RealtorHouseFinder {
         console.log('Binding events...');
         
         const searchForm = document.getElementById('searchForm');
+        const exportBtn = document.getElementById('exportBtn');
         const propertyListingsBtn = document.getElementById('propertyListingsBtn');
         const marketIntelligenceBtn = document.getElementById('marketIntelligenceBtn');
         const investmentAnalysisBtn = document.getElementById('investmentAnalysisBtn');
@@ -26,6 +27,7 @@ class RealtorHouseFinder {
 
         console.log('Elements found:', {
             searchForm: !!searchForm,
+            exportBtn: !!exportBtn,
             propertyListingsBtn: !!propertyListingsBtn,
             marketIntelligenceBtn: !!marketIntelligenceBtn,
             investmentAnalysisBtn: !!investmentAnalysisBtn,
@@ -50,7 +52,8 @@ class RealtorHouseFinder {
             });
         }
         
-        // Report button handlers
+        // Export and report button handlers
+        if (exportBtn) exportBtn.addEventListener('click', () => this.handleExport());
         if (propertyListingsBtn) propertyListingsBtn.addEventListener('click', () => this.createPropertyListingsReport());
         if (marketIntelligenceBtn) marketIntelligenceBtn.addEventListener('click', () => this.createMarketIntelligenceReport());
         if (investmentAnalysisBtn) investmentAnalysisBtn.addEventListener('click', () => this.createInvestmentAnalysisReport());
@@ -377,31 +380,31 @@ class RealtorHouseFinder {
         this.hideMessages();
 
         try {
-            // Use server-side export for better reliability
             const response = await fetch('/api/export', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    properties: this.properties
+                    properties: this.properties,
+                    filename: `realtor_listings_${new Date().toISOString().split('T')[0]}.xlsx`
                 })
             });
 
-            if (response.ok) {
-                // Get the filename from the Content-Disposition header
-                const contentDisposition = response.headers.get('Content-Disposition');
-                const filename = contentDisposition 
-                    ? contentDisposition.split('filename=')[1].replace(/"/g, '')
-                    : `realtor_listings_${new Date().toISOString().split('T')[0]}.xlsx`;
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-                // Create blob and download
+            // Check if response is Excel file (binary) or JSON error
+            const contentType = response.headers.get('content-type');
+            
+            if (contentType && contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
+                // Success - download the Excel file directly
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = filename;
-                link.style.display = 'none';
+                link.download = `realtor_listings_${new Date().toISOString().split('T')[0]}.xlsx`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -409,8 +412,9 @@ class RealtorHouseFinder {
                 
                 this.showSuccess(`Excel file downloaded successfully! ${this.properties.length} properties exported.`);
             } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Export failed');
+                // Error response
+                const data = await response.json();
+                this.showError(data.error || 'Export failed. Please try again.');
             }
         } catch (error) {
             console.error('Export error:', error);
@@ -815,15 +819,6 @@ class RealtorHouseFinder {
             `;
             chartContainer.appendChild(barItem);
         });
-    }
-
-    formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(amount);
     }
 
     async createMarketReport() {

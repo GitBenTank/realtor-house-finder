@@ -495,7 +495,7 @@
             
             <form id="searchForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div class="fade-in-delay-1 relative">
-                    <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
+                    <label for="location" class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
                         <i class="fas fa-map-marker-alt mr-2" style="color: var(--accent-primary);"></i>
                         Location
                     </label>
@@ -510,7 +510,7 @@
                 </div>
                 
                 <div class="fade-in-delay-2">
-                    <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
+                    <label for="propertyType" class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
                         <i class="fas fa-building mr-2" style="color: var(--accent-tertiary);"></i>
                         Property Type
                     </label>
@@ -523,7 +523,7 @@
                 </div>
                 
                 <div class="fade-in-delay-3">
-                    <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
+                    <label for="limit" class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
                         <i class="fas fa-list mr-2" style="color: var(--accent-secondary);"></i>
                         Max Results
                     </label>
@@ -537,7 +537,7 @@
                 </div>
 
                 <div class="fade-in-delay-4">
-                    <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
+                    <label for="dateRange" class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
                         <i class="fas fa-calendar-alt mr-2" style="color: var(--accent-tertiary);"></i>
                         Date Range
                     </label>
@@ -551,7 +551,7 @@
                 </div>
 
                 <div class="fade-in-delay-5">
-                    <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
+                    <label for="priceChange" class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
                         <i class="fas fa-tag mr-2" style="color: var(--accent-primary);"></i>
                         Price Changes
                     </label>
@@ -564,7 +564,7 @@
                 </div>
 
                 <div class="fade-in-delay-6">
-                    <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
+                    <label for="daysOnMarket" class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
                         <i class="fas fa-clock mr-2" style="color: var(--accent-primary);"></i>
                         Days on Market
                     </label>
@@ -578,7 +578,7 @@
                 </div>
                 
                 <div class="fade-in-delay-1">
-                    <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
+                    <label for="minPrice" class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
                         <i class="fas fa-dollar-sign mr-2" style="color: var(--accent-tertiary);"></i>
                         Min Price
                     </label>
@@ -587,7 +587,7 @@
                 </div>
                 
                 <div class="fade-in-delay-2">
-                    <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
+                    <label for="maxPrice" class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
                         <i class="fas fa-dollar-sign mr-2" style="color: #ef4444;"></i>
                         Max Price
                     </label>
@@ -596,7 +596,7 @@
                 </div>
                 
                 <div class="fade-in-delay-3">
-                    <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
+                    <label for="bedrooms" class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
                         <i class="fas fa-bed mr-2" style="color: var(--accent-primary);"></i>
                         Bedrooms
                     </label>
@@ -638,7 +638,13 @@
                         </h3>
                         <div id="resultsCount" class="text-lg" style="color: var(--text-secondary);"></div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
+                        <button id="exportBtn" 
+                                class="bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex flex-col items-center justify-center shadow-lg hover:shadow-xl hover:from-green-600 hover:to-emerald-600">
+                            <i class="fas fa-file-excel text-2xl mb-2"></i>
+                            <span class="text-sm font-semibold">Export to Excel</span>
+                            <span class="text-xs opacity-90 mt-1">Download property data</span>
+                        </button>
                         <button id="propertyListingsBtn" 
                                 class="btn-success text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex flex-col items-center justify-center shadow-lg hover:shadow-xl">
                             <i class="fas fa-robot text-2xl mb-2"></i>

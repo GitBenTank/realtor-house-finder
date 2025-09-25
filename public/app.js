@@ -226,12 +226,29 @@ class RealtorHouseFinder {
                 })
             });
 
-            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-            if (data.success) {
-                this.showSuccess(`Excel file created successfully! ${this.properties.length} properties exported.`);
-                this.downloadFile(data.filePath);
+            // Check if response is Excel file (binary) or JSON error
+            const contentType = response.headers.get('content-type');
+            
+            if (contentType && contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
+                // Success - download the Excel file directly
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `realtor_listings_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                this.showSuccess(`Excel file downloaded successfully! ${this.properties.length} properties exported.`);
             } else {
+                // Error response
+                const data = await response.json();
                 this.showError(data.error || 'Export failed. Please try again.');
             }
         } catch (error) {
