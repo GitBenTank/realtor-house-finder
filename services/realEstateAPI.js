@@ -122,7 +122,16 @@ class RealEstateAPI {
             const properties = this.formatProperties(response.data?.data?.home_search?.results || response.data?.home_search?.results || response.data?.properties || []);
             
             // Apply client-side filtering since the API doesn't support these filters
-            const filteredProperties = this.applyFilters(properties, { minPrice, maxPrice, bedrooms, bathrooms, propertyType, dateRange: params.dateRange });
+            const filteredProperties = this.applyFilters(properties, { 
+                minPrice, 
+                maxPrice, 
+                bedrooms, 
+                bathrooms, 
+                propertyType, 
+                dateRange: params.dateRange,
+                priceChange: params.priceChange,
+                daysOnMarket: params.daysOnMarket
+            });
             
             // Cache the result
             this.setCachedResult(cacheKey, filteredProperties);
@@ -705,7 +714,7 @@ class RealEstateAPI {
     }
 
     applyFilters(properties, filters) {
-        const { minPrice, maxPrice, bedrooms, bathrooms, propertyType, dateRange } = filters;
+        const { minPrice, maxPrice, bedrooms, bathrooms, propertyType, dateRange, priceChange, daysOnMarket } = filters;
         
         return properties.filter(property => {
             // Price filtering
@@ -743,14 +752,40 @@ class RealEstateAPI {
                 if (propertyDate < cutoffDate) return false;
             }
             
+            // Price change filtering
+            if (priceChange && priceChange !== 'any') {
+                const daysOnMarket = Math.floor((new Date() - new Date(property.listDate)) / (1000 * 60 * 60 * 24));
+                
+                switch (priceChange) {
+                    case 'reduced':
+                        if (!property.priceReducedAmount || property.priceReducedAmount <= 0) return false;
+                        break;
+                    case 'increased':
+                        // This would require historical price data, which we don't have
+                        // For now, we'll skip this filter
+                        break;
+                    case 'new':
+                        if (daysOnMarket > 7) return false;
+                        break;
+                }
+            }
+            
+            // Days on market filtering
+            if (daysOnMarket && daysOnMarket !== 'any') {
+                const propertyDaysOnMarket = Math.floor((new Date() - new Date(property.listDate)) / (1000 * 60 * 60 * 24));
+                const maxDays = parseInt(daysOnMarket);
+                
+                if (propertyDaysOnMarket > maxDays) return false;
+            }
+            
             return true;
         });
     }
 
     // Cache management methods
     generateCacheKey(params) {
-        const { location, propertyType, minPrice, maxPrice, bedrooms, bathrooms, limit, dateRange } = params;
-        return `${location}-${propertyType}-${minPrice}-${maxPrice}-${bedrooms}-${bathrooms}-${limit}-${dateRange}`;
+        const { location, propertyType, minPrice, maxPrice, bedrooms, bathrooms, limit, dateRange, priceChange, daysOnMarket } = params;
+        return `${location}-${propertyType}-${minPrice}-${maxPrice}-${bedrooms}-${bathrooms}-${limit}-${dateRange}-${priceChange}-${daysOnMarket}`;
     }
 
     getCachedResult(cacheKey) {

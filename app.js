@@ -55,11 +55,15 @@ class RealtorHouseFinder {
         const analyticsModal = document.getElementById('analyticsModal');
         const closeAnalytics = document.getElementById('closeAnalytics');
         
-        if (analyticsBtn) analyticsBtn.addEventListener('click', () => this.showAnalytics());
+        if (analyticsBtn) analyticsBtn.addEventListener('click', () => this.showMarketAnalytics());
         if (closeAnalytics) closeAnalytics.addEventListener('click', () => this.hideAnalytics());
         if (analyticsModal) analyticsModal.addEventListener('click', (e) => {
             if (e.target === analyticsModal) this.hideAnalytics();
         });
+
+        // Market report button
+        const marketReportBtn = document.getElementById('marketReportBtn');
+        if (marketReportBtn) marketReportBtn.addEventListener('click', () => this.createMarketReport());
 
         // Location autocomplete
         const locationInput = document.getElementById('location');
@@ -101,8 +105,10 @@ class RealtorHouseFinder {
             minPrice: parseInt(document.getElementById('minPrice')?.value) || 0,
             bedrooms: parseInt(document.getElementById('bedrooms')?.value) || 0,
             bathrooms: 0, // Not available in current form
-            limit: parseInt(document.getElementById('limit')?.value) || 100,
-            dateRange: document.getElementById('dateRange')?.value || 'any'
+            limit: parseInt(document.getElementById('limit')?.value) || 200,
+            dateRange: document.getElementById('dateRange')?.value || 'any',
+            priceChange: document.getElementById('priceChange')?.value || 'any',
+            daysOnMarket: document.getElementById('daysOnMarket')?.value || 'any'
         };
         
         // Only add maxPrice if it's not the default value
@@ -364,48 +370,34 @@ class RealtorHouseFinder {
         this.hideMessages();
 
         try {
-            // Check if XLSX library is loaded
-            if (typeof XLSX === 'undefined') {
-                throw new Error('Excel library not loaded. Please refresh the page and try again.');
+            // Use server-side export for better reliability
+            const response = await fetch('/api/export', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    properties: this.properties
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Download the file from server
+                const filename = data.filePath.split('/').pop();
+                const link = document.createElement('a');
+                link.href = `/api/download/${filename}`;
+                link.download = filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                this.showSuccess(`Excel file downloaded successfully! ${this.properties.length} properties exported.`);
+            } else {
+                throw new Error(data.error || 'Export failed');
             }
-
-            // Prepare data for Excel
-            const excelData = this.prepareExcelData(this.properties);
-            
-            // Create workbook
-            const workbook = XLSX.utils.book_new();
-            
-            // Add main properties sheet
-            const propertiesSheet = XLSX.utils.json_to_sheet(excelData.properties);
-            XLSX.utils.book_append_sheet(workbook, propertiesSheet, 'Properties');
-            
-            // Add summary sheet
-            const summarySheet = XLSX.utils.json_to_sheet(excelData.summary);
-            XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
-            
-            // Add market analysis sheet
-            const analysisSheet = XLSX.utils.json_to_sheet(excelData.analysis);
-            XLSX.utils.book_append_sheet(workbook, analysisSheet, 'Market Analysis');
-
-            // Generate filename
-            const timestamp = new Date().toISOString().split('T')[0];
-            const filename = `realtor_listings_${timestamp}.xlsx`;
-
-            // Download the file with explicit trigger
-            const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([wbout], { type: 'application/octet-stream' });
-            const url = URL.createObjectURL(blob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            
-            this.showSuccess(`Excel file downloaded successfully! ${this.properties.length} properties exported.`);
         } catch (error) {
             console.error('Export error:', error);
             this.showError('Export failed: ' + error.message);
@@ -444,7 +436,7 @@ class RealtorHouseFinder {
             minPrice: parseInt(document.getElementById('minPrice')?.value) || 0,
             bedrooms: parseInt(document.getElementById('bedrooms')?.value) || 0,
             bathrooms: 0, // Not available in current form
-            limit: parseInt(document.getElementById('limit')?.value) || 5,
+            limit: parseInt(document.getElementById('limit')?.value) || 200,
             dateRange: document.getElementById('dateRange')?.value || 'any'
         };
         
@@ -703,6 +695,169 @@ class RealtorHouseFinder {
     hideAnalytics() {
         const modal = document.getElementById('analyticsModal');
         modal.classList.add('hidden');
+    }
+
+    showMarketAnalytics() {
+        if (this.properties.length === 0) {
+            this.showError('No properties to analyze. Please search for properties first.');
+            return;
+        }
+
+        const analyticsSection = document.getElementById('analyticsSection');
+        if (analyticsSection) {
+            analyticsSection.classList.remove('hidden');
+            this.populateMarketAnalytics();
+            analyticsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    populateMarketAnalytics() {
+        const properties = this.properties;
+        
+        // Calculate basic statistics
+        const totalListings = properties.length;
+        const prices = properties.map(p => p.price).filter(p => p > 0);
+        const averagePrice = prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
+        const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+        const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+        
+        // Calculate days on market
+        const daysOnMarket = properties.map(p => {
+            const listDate = new Date(p.listDate);
+            const now = new Date();
+            return Math.floor((now - listDate) / (1000 * 60 * 60 * 24));
+        });
+        const avgDaysOnMarket = daysOnMarket.length > 0 ? Math.round(daysOnMarket.reduce((a, b) => a + b, 0) / daysOnMarket.length) : 0;
+        
+        // Recent listings (last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const recentListings = properties.filter(p => new Date(p.listDate) >= sevenDaysAgo).length;
+        
+        // Update the analytics display
+        document.getElementById('totalListings').textContent = totalListings.toLocaleString();
+        document.getElementById('averagePrice').textContent = this.formatCurrency(averagePrice);
+        document.getElementById('priceRange').textContent = `${this.formatCurrency(minPrice)} - ${this.formatCurrency(maxPrice)}`;
+        document.getElementById('avgDaysOnMarket').textContent = avgDaysOnMarket;
+        document.getElementById('recentListings').textContent = `${recentListings} properties listed in the last 7 days`;
+        
+        // Property type distribution
+        this.populatePropertyTypeChart(properties);
+        
+        // Price distribution
+        this.populatePriceDistributionChart(properties);
+    }
+
+    populatePropertyTypeChart(properties) {
+        const typeCounts = {};
+        properties.forEach(property => {
+            const type = property.propertyType || 'Unknown';
+            typeCounts[type] = (typeCounts[type] || 0) + 1;
+        });
+        
+        const chartContainer = document.getElementById('propertyTypeChart');
+        chartContainer.innerHTML = '';
+        
+        Object.entries(typeCounts).forEach(([type, count]) => {
+            const percentage = ((count / properties.length) * 100).toFixed(1);
+            const typeDisplay = type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            
+            const chartItem = document.createElement('div');
+            chartItem.className = 'bg-gray-700 rounded-lg p-4 text-center';
+            chartItem.innerHTML = `
+                <div class="text-2xl font-bold text-white">${count}</div>
+                <div class="text-sm text-gray-300">${typeDisplay}</div>
+                <div class="text-xs text-gray-400">${percentage}%</div>
+            `;
+            chartContainer.appendChild(chartItem);
+        });
+    }
+
+    populatePriceDistributionChart(properties) {
+        const priceRanges = [
+            { label: 'Under $200K', min: 0, max: 200000, color: 'bg-red-500' },
+            { label: '$200K - $400K', min: 200000, max: 400000, color: 'bg-orange-500' },
+            { label: '$400K - $600K', min: 400000, max: 600000, color: 'bg-yellow-500' },
+            { label: '$600K - $800K', min: 600000, max: 800000, color: 'bg-green-500' },
+            { label: '$800K - $1M', min: 800000, max: 1000000, color: 'bg-blue-500' },
+            { label: 'Over $1M', min: 1000000, max: Infinity, color: 'bg-purple-500' }
+        ];
+        
+        const chartContainer = document.getElementById('priceDistributionChart');
+        chartContainer.innerHTML = '';
+        
+        priceRanges.forEach(range => {
+            const count = properties.filter(p => p.price >= range.min && p.price < range.max).length;
+            const percentage = properties.length > 0 ? ((count / properties.length) * 100).toFixed(1) : 0;
+            
+            const barItem = document.createElement('div');
+            barItem.className = 'flex items-center space-x-4';
+            barItem.innerHTML = `
+                <div class="w-24 text-sm text-gray-300">${range.label}</div>
+                <div class="flex-1 bg-gray-700 rounded-full h-4 overflow-hidden">
+                    <div class="h-full ${range.color} transition-all duration-500" style="width: ${percentage}%"></div>
+                </div>
+                <div class="w-16 text-sm text-gray-300 text-right">${count} (${percentage}%)</div>
+            `;
+            chartContainer.appendChild(barItem);
+        });
+    }
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
+    }
+
+    async createMarketReport() {
+        if (this.properties.length === 0) {
+            this.showError('No properties to analyze. Please search for properties first.');
+            return;
+        }
+
+        this.showLoading(true);
+        this.hideMessages();
+
+        try {
+            const location = document.getElementById('location')?.value || 'Unknown';
+            
+            const response = await fetch('/api/market-analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    properties: this.properties,
+                    location: location
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Download the file from server
+                const filename = data.filePath.split('/').pop();
+                const link = document.createElement('a');
+                link.href = `/api/download/${filename}`;
+                link.download = filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                this.showSuccess(`Market analysis report downloaded successfully! ${this.properties.length} properties analyzed.`);
+            } else {
+                throw new Error(data.error || 'Market report creation failed');
+            }
+        } catch (error) {
+            console.error('Market report error:', error);
+            this.showError('Market report creation failed: ' + error.message);
+        } finally {
+            this.showLoading(false);
+        }
     }
 
     prepareExcelData(properties) {

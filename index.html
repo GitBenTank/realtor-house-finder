@@ -549,6 +549,33 @@
                         <option value="90">Last 90 Days</option>
                     </select>
                 </div>
+
+                <div class="fade-in-delay-5">
+                    <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-tag mr-2" style="color: var(--accent-primary);"></i>
+                        Price Changes
+                    </label>
+                    <select id="priceChange" class="w-full px-4 py-3 input-dark rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 text-lg touch-target">
+                        <option value="any">Any Price Change</option>
+                        <option value="reduced">Price Reduced</option>
+                        <option value="increased">Price Increased</option>
+                        <option value="new">New Listings</option>
+                    </select>
+                </div>
+
+                <div class="fade-in-delay-6">
+                    <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-clock mr-2" style="color: var(--accent-primary);"></i>
+                        Days on Market
+                    </label>
+                    <select id="daysOnMarket" class="w-full px-4 py-3 input-dark rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 text-lg touch-target">
+                        <option value="any">Any Time</option>
+                        <option value="7">Under 7 Days</option>
+                        <option value="30">Under 30 Days</option>
+                        <option value="90">Under 90 Days</option>
+                        <option value="180">Under 180 Days</option>
+                    </select>
+                </div>
                 
                 <div class="fade-in-delay-1">
                     <label class="block text-sm font-semibold mb-3 flex items-center" style="color: var(--text-primary);">
@@ -620,7 +647,12 @@
                         <button id="analyticsBtn" 
                                 class="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center w-full sm:w-auto shadow-lg hover:from-purple-600 hover:to-pink-600">
                             <i class="fas fa-chart-line mr-2"></i>
-                            View Analytics
+                            Market Analytics
+                        </button>
+                        <button id="marketReportBtn" 
+                                class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center w-full sm:w-auto shadow-lg hover:from-indigo-600 hover:to-purple-600">
+                            <i class="fas fa-file-alt mr-2"></i>
+                            Market Report
                         </button>
                         <button id="clearBtn" 
                                 class="btn-danger text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center w-full sm:w-auto shadow-lg">
@@ -643,6 +675,98 @@
                     <button id="nextPage" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                         Next<i class="fas fa-chevron-right ml-2"></i>
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Analytics Section -->
+        <div id="analyticsSection" class="hidden fade-in">
+            <div class="rounded-2xl shadow-2xl p-6 md:p-8 mb-8 card-hover" style="background: var(--bg-secondary); border: 1px solid var(--border-color);">
+                <div class="text-center mb-8">
+                    <h3 class="text-2xl md:text-3xl font-bold mb-2 flex items-center justify-center" style="color: var(--text-primary);">
+                        <i class="fas fa-chart-line mr-3" style="color: var(--accent-primary);"></i>
+                        Market Analytics
+                    </h3>
+                    <p class="text-lg" style="color: var(--text-secondary);">Insights and trends for your search area</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Total Listings -->
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-100 text-sm font-medium">Total Listings</p>
+                                <p id="totalListings" class="text-3xl font-bold">0</p>
+                            </div>
+                            <i class="fas fa-home text-4xl text-blue-200"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Average Price -->
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-100 text-sm font-medium">Average Price</p>
+                                <p id="averagePrice" class="text-3xl font-bold">$0</p>
+                            </div>
+                            <i class="fas fa-dollar-sign text-4xl text-green-200"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Price Range -->
+                    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-100 text-sm font-medium">Price Range</p>
+                                <p id="priceRange" class="text-lg font-bold">$0 - $0</p>
+                            </div>
+                            <i class="fas fa-chart-bar text-4xl text-purple-200"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Days on Market -->
+                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-orange-100 text-sm font-medium">Avg. Days on Market</p>
+                                <p id="avgDaysOnMarket" class="text-3xl font-bold">0</p>
+                            </div>
+                            <i class="fas fa-clock text-4xl text-orange-200"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Property Type Distribution -->
+                <div class="mb-8">
+                    <h4 class="text-xl font-bold mb-4 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-pie-chart mr-2" style="color: var(--accent-primary);"></i>
+                        Property Type Distribution
+                    </h4>
+                    <div id="propertyTypeChart" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <!-- Chart items will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Price Distribution -->
+                <div class="mb-8">
+                    <h4 class="text-xl font-bold mb-4 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-chart-area mr-2" style="color: var(--accent-primary);"></i>
+                        Price Distribution
+                    </h4>
+                    <div id="priceDistributionChart" class="space-y-3">
+                        <!-- Price range bars will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Recent Listings -->
+                <div>
+                    <h4 class="text-xl font-bold mb-4 flex items-center" style="color: var(--text-primary);">
+                        <i class="fas fa-calendar-alt mr-2" style="color: var(--accent-primary);"></i>
+                        Recent Listings (Last 7 Days)
+                    </h4>
+                    <div id="recentListings" class="text-lg" style="color: var(--text-secondary);">
+                        <!-- Recent listings count will be populated by JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>

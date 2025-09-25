@@ -196,6 +196,254 @@ class ExcelService {
             throw error;
         }
     }
+
+    async createMarketAnalysisReport(properties, location = 'Unknown') {
+        try {
+            const filename = `market_analysis_${moment().format('YYYY-MM-DD')}.xlsx`;
+            const filePath = path.join(this.outputDir, filename);
+
+            // Create workbook
+            const workbook = XLSX.utils.book_new();
+            
+            // Add properties sheet
+            const propertiesData = this.prepareExcelData(properties);
+            const propertiesSheet = XLSX.utils.json_to_sheet(propertiesData.properties);
+            XLSX.utils.book_append_sheet(workbook, propertiesSheet, 'Properties');
+            
+            // Add market summary
+            const marketSummary = this.generateMarketSummary(properties, location);
+            const summarySheet = XLSX.utils.json_to_sheet(marketSummary);
+            XLSX.utils.book_append_sheet(workbook, summarySheet, 'Market Summary');
+            
+            // Add price trends
+            const priceTrends = this.generatePriceTrends(properties);
+            const trendsSheet = XLSX.utils.json_to_sheet(priceTrends);
+            XLSX.utils.book_append_sheet(workbook, trendsSheet, 'Price Trends');
+            
+            // Add neighborhood analysis
+            const neighborhoodAnalysis = this.generateNeighborhoodAnalysis(properties);
+            const neighborhoodSheet = XLSX.utils.json_to_sheet(neighborhoodAnalysis);
+            XLSX.utils.book_append_sheet(workbook, neighborhoodSheet, 'Neighborhood Analysis');
+            
+            // Add investment analysis
+            const investmentAnalysis = this.generateInvestmentAnalysis(properties);
+            const investmentSheet = XLSX.utils.json_to_sheet(investmentAnalysis);
+            XLSX.utils.book_append_sheet(workbook, investmentSheet, 'Investment Analysis');
+
+            // Write file
+            XLSX.writeFile(workbook, filePath);
+            
+            console.log(`📊 Market analysis report created: ${filePath}`);
+            return filePath;
+        } catch (error) {
+            console.error('Market analysis report error:', error);
+            throw error;
+        }
+    }
+
+    generateMarketSummary(properties, location) {
+        const totalProperties = properties.length;
+        const prices = properties.map(p => p.price).filter(p => p > 0);
+        const avgPrice = prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
+        const medianPrice = prices.length > 0 ? this.calculateMedian(prices) : 0;
+        const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+        const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+        
+        // Calculate days on market
+        const daysOnMarket = properties.map(p => {
+            const listDate = new Date(p.listDate);
+            const now = new Date();
+            return Math.floor((now - listDate) / (1000 * 60 * 60 * 24));
+        });
+        const avgDaysOnMarket = daysOnMarket.length > 0 ? Math.round(daysOnMarket.reduce((a, b) => a + b, 0) / daysOnMarket.length) : 0;
+        
+        // Recent listings (last 7, 14, 30 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const recent7Days = properties.filter(p => new Date(p.listDate) >= sevenDaysAgo).length;
+        const recent14Days = properties.filter(p => new Date(p.listDate) >= fourteenDaysAgo).length;
+        const recent30Days = properties.filter(p => new Date(p.listDate) >= thirtyDaysAgo).length;
+        
+        return [
+            { 'Metric': 'Location', 'Value': location },
+            { 'Metric': 'Report Date', 'Value': moment().format('MM/DD/YYYY HH:mm') },
+            { 'Metric': '', 'Value': '' },
+            { 'Metric': 'TOTAL PROPERTIES', 'Value': totalProperties },
+            { 'Metric': 'Average Price', 'Value': this.formatCurrency(avgPrice) },
+            { 'Metric': 'Median Price', 'Value': this.formatCurrency(medianPrice) },
+            { 'Metric': 'Lowest Price', 'Value': this.formatCurrency(minPrice) },
+            { 'Metric': 'Highest Price', 'Value': this.formatCurrency(maxPrice) },
+            { 'Metric': 'Price Range', 'Value': `${this.formatCurrency(maxPrice - minPrice)}` },
+            { 'Metric': '', 'Value': '' },
+            { 'Metric': 'MARKET ACTIVITY', 'Value': '' },
+            { 'Metric': 'Average Days on Market', 'Value': `${avgDaysOnMarket} days` },
+            { 'Metric': 'Listings Last 7 Days', 'Value': recent7Days },
+            { 'Metric': 'Listings Last 14 Days', 'Value': recent14Days },
+            { 'Metric': 'Listings Last 30 Days', 'Value': recent30Days },
+            { 'Metric': '', 'Value': '' },
+            { 'Metric': 'MARKET INSIGHTS', 'Value': '' },
+            { 'Metric': 'Market Activity Level', 'Value': this.getMarketActivityLevel(recent7Days, totalProperties) },
+            { 'Metric': 'Price Volatility', 'Value': this.calculatePriceVolatility(prices) },
+            { 'Metric': 'Inventory Turnover', 'Value': this.calculateInventoryTurnover(avgDaysOnMarket) }
+        ];
+    }
+
+    generatePriceTrends(properties) {
+        const priceRanges = [
+            { range: 'Under $200K', min: 0, max: 200000 },
+            { range: '$200K - $400K', min: 200000, max: 400000 },
+            { range: '$400K - $600K', min: 400000, max: 600000 },
+            { range: '$600K - $800K', min: 600000, max: 800000 },
+            { range: '$800K - $1M', min: 800000, max: 1000000 },
+            { range: 'Over $1M', min: 1000000, max: Infinity }
+        ];
+
+        return priceRanges.map(range => {
+            const count = properties.filter(p => p.price >= range.min && p.price < range.max).length;
+            const percentage = properties.length > 0 ? ((count / properties.length) * 100).toFixed(1) : 0;
+            const avgPrice = properties.filter(p => p.price >= range.min && p.price < range.max)
+                .map(p => p.price)
+                .reduce((a, b) => a + b, 0) / count || 0;
+            
+            return {
+                'Price Range': range.range,
+                'Count': count,
+                'Percentage': `${percentage}%`,
+                'Average Price': this.formatCurrency(avgPrice),
+                'Market Share': percentage > 20 ? 'High' : percentage > 10 ? 'Medium' : 'Low'
+            };
+        });
+    }
+
+    generateNeighborhoodAnalysis(properties) {
+        const neighborhoods = {};
+        
+        properties.forEach(property => {
+            const city = property.city || 'Unknown';
+            const state = property.state || 'Unknown';
+            const neighborhood = `${city}, ${state}`;
+            
+            if (!neighborhoods[neighborhood]) {
+                neighborhoods[neighborhood] = {
+                    count: 0,
+                    totalPrice: 0,
+                    prices: [],
+                    propertyTypes: {}
+                };
+            }
+            
+            neighborhoods[neighborhood].count++;
+            neighborhoods[neighborhood].totalPrice += property.price;
+            neighborhoods[neighborhood].prices.push(property.price);
+            neighborhoods[neighborhood].propertyTypes[property.propertyType] = 
+                (neighborhoods[neighborhood].propertyTypes[property.propertyType] || 0) + 1;
+        });
+        
+        return Object.entries(neighborhoods).map(([neighborhood, data]) => ({
+            'Neighborhood': neighborhood,
+            'Properties': data.count,
+            'Average Price': this.formatCurrency(data.totalPrice / data.count),
+            'Median Price': this.formatCurrency(this.calculateMedian(data.prices)),
+            'Price Range': `${this.formatCurrency(Math.min(...data.prices))} - ${this.formatCurrency(Math.max(...data.prices))}`,
+            'Dominant Type': Object.entries(data.propertyTypes).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Unknown',
+            'Market Share': `${((data.count / properties.length) * 100).toFixed(1)}%`
+        }));
+    }
+
+    generateInvestmentAnalysis(properties) {
+        const analysis = properties.map(property => {
+            const pricePerSqFt = property.squareFeet > 0 ? Math.round(property.price / property.squareFeet) : 0;
+            const daysOnMarket = Math.floor((new Date() - new Date(property.listDate)) / (1000 * 60 * 60 * 24));
+            
+            // Simple investment score (0-100)
+            let investmentScore = 50; // Base score
+            
+            // Price per sq ft scoring
+            if (pricePerSqFt < 100) investmentScore += 20;
+            else if (pricePerSqFt < 200) investmentScore += 10;
+            else if (pricePerSqFt > 400) investmentScore -= 20;
+            
+            // Days on market scoring
+            if (daysOnMarket < 30) investmentScore += 15;
+            else if (daysOnMarket > 90) investmentScore -= 15;
+            
+            // Property type scoring
+            if (property.propertyType === 'single_family') investmentScore += 10;
+            else if (property.propertyType === 'condo') investmentScore += 5;
+            
+            // Price range scoring
+            if (property.price < 300000) investmentScore += 10;
+            else if (property.price > 1000000) investmentScore -= 10;
+            
+            return {
+                'Property ID': property.id,
+                'Address': property.address,
+                'Price': this.formatCurrency(property.price),
+                'Price per Sq Ft': `$${pricePerSqFt}`,
+                'Square Feet': property.squareFeet,
+                'Days on Market': daysOnMarket,
+                'Property Type': property.propertyType,
+                'Investment Score': Math.max(0, Math.min(100, investmentScore)),
+                'Investment Rating': this.getInvestmentRating(investmentScore),
+                'Recommendation': this.getInvestmentRecommendation(investmentScore)
+            };
+        });
+        
+        return analysis.sort((a, b) => b['Investment Score'] - a['Investment Score']);
+    }
+
+    calculateMedian(numbers) {
+        const sorted = numbers.slice().sort((a, b) => a - b);
+        const middle = Math.floor(sorted.length / 2);
+        return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+    }
+
+    getMarketActivityLevel(recent7Days, totalProperties) {
+        const activityRate = (recent7Days / totalProperties) * 100;
+        if (activityRate > 20) return 'Very High';
+        if (activityRate > 10) return 'High';
+        if (activityRate > 5) return 'Medium';
+        return 'Low';
+    }
+
+    calculatePriceVolatility(prices) {
+        if (prices.length < 2) return 'Low';
+        const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+        const variance = prices.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / prices.length;
+        const stdDev = Math.sqrt(variance);
+        const coefficient = (stdDev / avg) * 100;
+        
+        if (coefficient > 30) return 'High';
+        if (coefficient > 15) return 'Medium';
+        return 'Low';
+    }
+
+    calculateInventoryTurnover(avgDaysOnMarket) {
+        if (avgDaysOnMarket < 30) return 'Fast';
+        if (avgDaysOnMarket < 60) return 'Normal';
+        return 'Slow';
+    }
+
+    getInvestmentRating(score) {
+        if (score >= 80) return 'Excellent';
+        if (score >= 70) return 'Good';
+        if (score >= 60) return 'Fair';
+        if (score >= 50) return 'Average';
+        return 'Poor';
+    }
+
+    getInvestmentRecommendation(score) {
+        if (score >= 80) return 'Strong Buy';
+        if (score >= 70) return 'Buy';
+        if (score >= 60) return 'Consider';
+        if (score >= 50) return 'Hold';
+        return 'Avoid';
+    }
 }
 
 module.exports = new ExcelService();

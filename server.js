@@ -178,7 +178,7 @@ app.get('/api/debug', async (req, res) => {
 // Search properties (GET and POST)
 app.get('/api/search', async (req, res) => {
     try {
-        const { location, propertyType, minPrice, maxPrice, bedrooms, bathrooms, limit = 50 } = req.query;
+        const { location, propertyType, minPrice, maxPrice, bedrooms, bathrooms, limit = 200 } = req.query;
         
         const searchParams = {
             location,
@@ -187,7 +187,7 @@ app.get('/api/search', async (req, res) => {
             maxPrice: maxPrice || 10000000,
             bedrooms: bedrooms || 0,
             bathrooms: bathrooms || 0,
-            limit: Math.min(limit, 100)
+            limit: Math.min(limit, 500)
         };
 
         // Track this search
@@ -213,7 +213,7 @@ app.get('/api/search', async (req, res) => {
 
 app.post('/api/search', async (req, res) => {
     try {
-        const { location, propertyType, minPrice, maxPrice, bedrooms, bathrooms, limit = 50 } = req.body;
+        const { location, propertyType, minPrice, maxPrice, bedrooms, bathrooms, limit = 200 } = req.body;
         
         const searchParams = {
             location,
@@ -222,7 +222,7 @@ app.post('/api/search', async (req, res) => {
             maxPrice: maxPrice || 10000000,
             bedrooms: bedrooms || 0,
             bathrooms: bathrooms || 0,
-            limit: Math.min(limit, 100)
+            limit: Math.min(limit, 500)
         };
 
         // Track this search
@@ -278,6 +278,23 @@ app.get('/api/download/:filename', (req, res) => {
     } catch (error) {
         console.error('Download error:', error);
         res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Enhanced market analysis report
+app.post('/api/market-analysis', async (req, res) => {
+    try {
+        const { properties, location } = req.body;
+        
+        if (!properties || !Array.isArray(properties)) {
+            return res.status(400).json({ success: false, error: 'Properties array is required' });
+        }
+
+        const filePath = await excelService.createMarketAnalysisReport(properties, location || 'Unknown');
+        res.json({ success: true, filePath, message: 'Market analysis report created successfully' });
+    } catch (error) {
+        console.error('Market analysis error:', error);
+        res.status(500).json({ success: false, error: 'Failed to create market analysis report' });
     }
 });
 
