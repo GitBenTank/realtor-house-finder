@@ -475,6 +475,21 @@
                         <span class="text-xs text-blue-100">Powered by RapidAPI</span>
                     </div>
                 </div>
+                
+                <!-- API Usage Display -->
+                <div id="apiUsage" class="glass rounded-lg px-4 py-2 fade-in-delay-2 mt-4 md:mt-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-chart-line text-blue-300"></i>
+                        <span class="text-sm font-medium">API Usage</span>
+                    </div>
+                    <div class="flex items-center space-x-2 mt-1">
+                        <span class="text-xs text-blue-100">Calls Used: <span id="callsUsed">-</span></span>
+                        <span class="text-xs text-green-300">Remaining: <span id="callsRemaining">-</span></span>
+                    </div>
+                    <div class="flex items-center space-x-2 mt-1">
+                        <span class="text-xs text-yellow-300">Plan: <span id="planType">-</span></span>
+                    </div>
+                </div>
             </div>
         </div>
     </header>

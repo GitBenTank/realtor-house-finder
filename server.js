@@ -14,8 +14,51 @@ const analytics = {
     totalApiCalls: 0,
     searches: [],
     startTime: new Date(),
-    dailyStats: {}
+    dailyStats: {},
+    apiUsage: {
+        callsUsed: 0,
+        callsRemaining: null, // Will be estimated based on plan
+        lastReset: new Date(),
+        planType: 'unknown'
+    }
 };
+
+// Function to estimate API usage
+function estimateApiUsage() {
+    const now = new Date();
+    const daysSinceReset = Math.floor((now - analytics.apiUsage.lastReset) / (1000 * 60 * 60 * 24));
+    
+    // Common RapidAPI plans (estimates)
+    const plans = {
+        'free': { monthly: 100, daily: 3 },
+        'basic': { monthly: 1000, daily: 33 },
+        'pro': { monthly: 10000, daily: 333 },
+        'enterprise': { monthly: 100000, daily: 3333 }
+    };
+    
+    // Try to determine plan based on usage patterns
+    let estimatedPlan = 'basic'; // Default assumption
+    if (analytics.apiUsage.callsUsed < 100) {
+        estimatedPlan = 'free';
+    } else if (analytics.apiUsage.callsUsed > 1000) {
+        estimatedPlan = 'pro';
+    }
+    
+    const plan = plans[estimatedPlan];
+    const estimatedRemaining = Math.max(0, plan.monthly - analytics.apiUsage.callsUsed);
+    
+    analytics.apiUsage.planType = estimatedPlan;
+    analytics.apiUsage.callsRemaining = estimatedRemaining;
+    
+    return {
+        callsUsed: analytics.apiUsage.callsUsed,
+        callsRemaining: estimatedRemaining,
+        planType: estimatedPlan,
+        monthlyLimit: plan.monthly,
+        dailyLimit: plan.daily,
+        lastReset: analytics.apiUsage.lastReset
+    };
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,6 +96,20 @@ app.get('/api/health', (req, res) => {
             hasRapidAPIKey: !!process.env.RAPIDAPI_KEY,
             hasRapidAPIHost: !!process.env.RAPIDAPI_HOST,
             rapidAPIHost: process.env.RAPIDAPI_HOST
+        }
+    });
+});
+
+// API Usage endpoint
+app.get('/api/usage', (req, res) => {
+    const usage = estimateApiUsage();
+    res.json({
+        success: true,
+        data: usage,
+        analytics: {
+            totalSearches: analytics.totalSearches,
+            totalApiCalls: analytics.totalApiCalls,
+            uptime: Math.floor((new Date() - analytics.startTime) / (1000 * 60 * 60 * 24)) + ' days'
         }
     });
 });
@@ -231,6 +288,11 @@ app.post('/api/search', async (req, res) => {
 
         const realEstateAPI = new RealEstateAPI();
         const properties = await realEstateAPI.searchProperties(searchParams);
+        
+        // Track API call usage
+        analytics.apiUsage.callsUsed++;
+        analytics.totalApiCalls++;
+        
         res.json({ success: true, data: properties, count: properties.length });
     } catch (error) {
         console.error('Search error:', error);

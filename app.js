@@ -11,6 +11,12 @@ class RealtorHouseFinder {
     init() {
         this.bindEvents();
         this.checkAPIHealth();
+        this.loadAPIUsage();
+        
+        // Refresh API usage every 30 seconds
+        setInterval(() => {
+            this.loadAPIUsage();
+        }, 30000);
     }
 
     bindEvents() {
@@ -101,6 +107,33 @@ class RealtorHouseFinder {
         }
     }
 
+    async loadAPIUsage() {
+        try {
+            const response = await fetch('/api/usage');
+            const data = await response.json();
+            
+            if (data.success) {
+                const usage = data.data;
+                document.getElementById('callsUsed').textContent = usage.callsUsed;
+                document.getElementById('callsRemaining').textContent = usage.callsRemaining;
+                document.getElementById('planType').textContent = usage.planType.toUpperCase();
+                
+                // Update colors based on usage
+                const remainingElement = document.getElementById('callsRemaining');
+                if (usage.callsRemaining < 10) {
+                    remainingElement.className = 'text-xs text-red-300';
+                } else if (usage.callsRemaining < 50) {
+                    remainingElement.className = 'text-xs text-yellow-300';
+                } else {
+                    remainingElement.className = 'text-xs text-green-300';
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load API usage:', error);
+            // Don't show error to user, just log it
+        }
+    }
+
     async handleSearch(e) {
         e.preventDefault();
         console.log('Search form submitted - event:', e.type);
@@ -166,6 +199,8 @@ class RealtorHouseFinder {
             this.showError('Search failed. Please check your connection and try again.');
         } finally {
             this.showLoading(false);
+            // Refresh API usage after search
+            this.loadAPIUsage();
         }
     }
 
